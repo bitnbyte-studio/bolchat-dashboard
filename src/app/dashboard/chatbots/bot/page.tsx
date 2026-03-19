@@ -207,7 +207,7 @@ export default function BotManagerPage() {
                   </div>
                 </div>
                 <div className="space-y-6">
-                  <div class="flex justify-between items-center">
+                  <div className="flex justify-between items-center">
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Max Tokens per Resolve</label>
                     <span className="text-sm font-bold text-rose-500 bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded-lg border border-rose-100 dark:border-transparent">450</span>
                   </div>
