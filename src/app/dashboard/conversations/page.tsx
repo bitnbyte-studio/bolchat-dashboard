@@ -1,77 +1,65 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Filter, RefreshCcw, Search, Globe, MapPin, 
   Archive, CheckCircle, MoreVertical, Paperclip, 
-  Smile, Image as ImageIcon, Zap, Send, Bot, MessageCircle
+  Smile, Image as ImageIcon, Zap, Send, Bot, MessageCircle,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getConversationsAction, getConversationDetailAction } from "@/app/actions/conversations";
 
 export default function ConversationsPage() {
-  const [activeChat, setActiveChat] = useState("mr");
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [activeChatDetail, setActiveChatDetail] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const chats = [
-    {
-      id: "mr",
-      initials: "MR",
-      name: "Marco Rossi",
-      status: "Unread",
-      preview: "Quando potete spedire il mio ordine? È per un ...",
-      lang: "IT",
-      location: "Milan, IT",
-      time: "5m ago",
-      avatarColor: "orange",
-      unread: true
-    },
-    {
-      id: "sj",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-      name: "Sarah Johnson",
-      status: "Read",
-      preview: "Thank you for the discount code! I just placed my order.",
-      lang: "EN",
-      location: "London, UK",
-      time: "2h ago",
-      unread: false
-    },
-    {
-      id: "yt",
-      initials: "YT",
-      name: "Yuki Tanaka",
-      status: "Read",
-      preview: "配送状況を確認したいのですが、追跡番号が届きません。",
-      lang: "JP",
-      location: "Tokyo, JP",
-      time: "5h ago",
-      avatarColor: "blue",
-      unread: false
-    },
-    {
-      id: "er",
-      initials: "ER",
-      name: "Elena Rodriguez",
-      status: "Read",
-      preview: "¿Tienen la chaqueta Luxe Bomber en color azul marino?",
-      lang: "ES",
-      location: "Madrid, ES",
-      time: "1d ago",
-      avatarColor: "purple",
-      unread: false
-    },
-    {
-      id: "cw",
-      initials: "CW",
-      name: "Chen Wei",
-      status: "Read",
-      preview: "我想了解一下你们的退货政策是怎么样的？",
-      lang: "CN",
-      location: "Shanghai, CN",
-      time: "2d ago",
-      avatarColor: "teal",
-      unread: false
+  useEffect(() => {
+    fetchConversations();
+  }, []);
+
+  useEffect(() => {
+    if (activeChatId) {
+      fetchChatDetail(activeChatId);
     }
-  ];
+  }, [activeChatId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [activeChatDetail]);
+
+  async function fetchConversations() {
+    setLoading(true);
+    const result = await getConversationsAction();
+    if (result.success && result.data) {
+      setConversations(result.data);
+      if (result.data.length > 0 && !activeChatId) {
+        setActiveChatId(result.data[0].id);
+      }
+    }
+    setLoading(false);
+  }
+
+  async function fetchChatDetail(id: string) {
+    setDetailLoading(true);
+    const result = await getConversationDetailAction(id);
+    if (result.success) {
+      setActiveChatDetail(result.data);
+    }
+    setDetailLoading(false);
+  }
+
+  const getAvatarColor = (id: string) => {
+    const colors = ["orange", "blue", "purple", "teal"];
+    const index = id.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  };
 
   return (
     <div className="flex flex-col lg:flex-row h-full min-h-[calc(100vh-10rem)] bg-white dark:bg-[#0a0f1e]/40 border border-slate-200 dark:border-white/5 rounded-[2.5rem] overflow-hidden shadow-sm relative">
@@ -86,7 +74,7 @@ export default function ConversationsPage() {
           <div className="flex justify-between items-center sm:items-end">
             <div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white font-cabinet">
-                All Conversations <span className="text-slate-500 dark:text-slate-400 font-medium ml-1 text-[15px]">(847)</span>
+                All Conversations <span className="text-slate-500 dark:text-slate-400 font-medium ml-1 text-[15px]">({conversations.length})</span>
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 hidden sm:block">Active chats and history</p>
             </div>
@@ -129,52 +117,59 @@ export default function ConversationsPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto scrollbar-hide px-3 space-y-1 pb-4">
-          {chats.map((chat) => (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+              <Loader2 className="w-8 h-8 animate-spin mb-2" />
+              <p className="text-[10px] font-bold uppercase tracking-widest">Loading chats...</p>
+            </div>
+          ) : conversations.length === 0 ? (
+            <div className="py-20 text-center text-slate-500 text-xs uppercase tracking-widest">No chats yet</div>
+          ) : conversations.map((chat) => (
             <div 
               key={chat.id}
-              onClick={() => setActiveChat(chat.id)}
+              onClick={() => setActiveChatId(chat.id)}
               className={cn(
                 "p-4 rounded-2xl cursor-pointer transition-all group flex gap-4 border",
-                activeChat === chat.id 
+                activeChatId === chat.id 
                   ? "bg-rose-50 dark:bg-rose-500/10 border-rose-500" 
                   : "bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-white/5"
               )}
             >
               <div className="relative flex-shrink-0 pt-0.5">
-                {chat.avatar ? (
-                  <img src={chat.avatar} className="w-12 h-12 rounded-full bg-slate-100 dark:bg-white/5" alt={chat.name} />
-                ) : (
-                  <div className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm",
-                    chat.avatarColor === "orange" && "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-500",
-                    chat.avatarColor === "blue" && "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-500",
-                    chat.avatarColor === "purple" && "bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-500",
-                    chat.avatarColor === "teal" && "bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-500",
-                  )}>
-                    {chat.initials}
-                  </div>
-                )}
-                {chat.unread && (
+                <div className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm",
+                  getAvatarColor(chat.id) === "orange" && "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-500",
+                  getAvatarColor(chat.id) === "blue" && "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-500",
+                  getAvatarColor(chat.id) === "purple" && "bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-500",
+                  getAvatarColor(chat.id) === "teal" && "bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-500",
+                )}>
+                  {getInitials(chat.metadata?.user_name || "User")}
+                </div>
+                {chat.status === "ACTIVE" && (
                   <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 rounded-full border-2 border-white dark:border-[#0d1425]"></div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{chat.name}</h4>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{chat.metadata?.user_name || "Anonymous User"}</h4>
                   <span className={cn(
                     "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase",
-                    chat.unread 
+                    chat.status === "ACTIVE"
                       ? "text-rose-600 bg-rose-100 dark:text-rose-500 dark:bg-rose-500/10" 
                       : "text-slate-400 dark:text-slate-500"
                   )}>
                     {chat.status}
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 truncate">{chat.preview}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 truncate">
+                  {chat.last_message || "No messages yet"}
+                </p>
                 <div className="flex items-center gap-3 mt-3 text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                  <span className="flex items-center gap-1"><Globe className="w-3 h-3"/> {chat.lang}</span>
-                  <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3"/> {chat.location}</span>
-                  <span className="ml-auto lowercase font-medium tracking-normal opacity-70">{chat.time}</span>
+                  <span className="flex items-center gap-1"><Globe className="w-3 h-3"/> {chat.metadata?.language || '--'}</span>
+                  <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3"/> {chat.metadata?.country || 'Unknown'}</span>
+                  <span className="ml-auto lowercase font-medium tracking-normal opacity-70">
+                    {new Date(chat.created_at).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -194,20 +189,30 @@ export default function ConversationsPage() {
         {/* Chat Header */}
         <div className="p-4 sm:p-6 sticky top-0 bg-white/80 dark:bg-[#0a0f1e]/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-20">
           <div className="flex items-center gap-4">
-            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center text-orange-600 dark:text-orange-500 font-bold text-lg ring-4 ring-white dark:ring-white/5 shrink-0">
-              MR
+            <div className={cn(
+              "w-12 sm:w-14 h-12 sm:h-14 rounded-full flex items-center justify-center font-bold text-lg ring-4 ring-white dark:ring-white/5 shrink-0",
+              activeChatId ? (
+                getAvatarColor(activeChatId) === "orange" && "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-500" ||
+                getAvatarColor(activeChatId) === "blue" && "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-500" ||
+                getAvatarColor(activeChatId) === "purple" && "bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-500" ||
+                getAvatarColor(activeChatId) === "teal" && "bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-500"
+              ) : "bg-slate-100"
+            )}>
+              {activeChatDetail ? getInitials(activeChatDetail.metadata?.user_name || "User") : "??"}
             </div>
             <div className="space-y-1 min-w-0">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3 truncate">
-                Marco Rossi 
-                <span className="px-2 py-0.5 rounded-md bg-rose-500 text-white text-[8px] sm:text-[9px] font-bold uppercase tracking-widest shadow-md shadow-rose-500/20 shrink-0">Unread</span>
+                {activeChatDetail ? (activeChatDetail.metadata?.user_name || "Anonymous User") : "Select a conversation"}
+                {activeChatDetail?.status === "ACTIVE" && (
+                  <span className="px-2 py-0.5 rounded-md bg-rose-500 text-white text-[8px] sm:text-[9px] font-bold uppercase tracking-widest shadow-md shadow-rose-500/20 shrink-0">Live</span>
+                )}
               </h3>
               <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                <span className="flex items-center gap-1 text-rose-500 dark:text-rose-400"><Globe className="w-3 h-3" /> Native: IT (Italian)</span>
+                <span className="flex items-center gap-1 text-rose-500 dark:text-rose-400"><Globe className="w-3 h-3" /> {activeChatDetail?.metadata?.language || 'Unknown Language'}</span>
                 <span className="w-1 h-1 bg-slate-300 dark:bg-white/10 rounded-full hidden sm:block"></span>
-                <span className="hidden sm:block">Milan, IT</span>
+                <span className="hidden sm:block">{activeChatDetail?.metadata?.country || 'Unknown Location'}</span>
                 <span className="w-1 h-1 bg-slate-300 dark:bg-white/10 rounded-full hidden sm:block"></span>
-                <span className="hidden sm:block">Started 5h ago</span>
+                <span className="hidden sm:block">ID: {activeChatDetail?.id.slice(0, 8)}...</span>
               </div>
             </div>
           </div>
@@ -227,72 +232,57 @@ export default function ConversationsPage() {
 
         {/* Chat History Container */}
         <div className="flex-1 overflow-y-auto scrollbar-hide p-4 sm:p-8 space-y-6 sm:space-y-8 pb-36 sm:pb-40">
-          
-          <div className="flex justify-start gap-3 sm:gap-4">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-rose-500/20">
-              <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <div className="max-w-[85%] sm:max-w-[75%] space-y-2">
-              <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 sm:p-5 text-[13px] sm:text-sm leading-relaxed text-slate-700 dark:text-slate-200 rounded-2xl rounded-tl-none shadow-sm pb-5">
-                Ciao! Benvenuto in Luxe Assistant. Come posso aiutarti oggi con la nostra collezione?
-              </div>
-              <p className="text-[9px] font-bold text-slate-500 dark:text-slate-600 uppercase ml-1">14:30 • BolChat AI (Luxe Agent)</p>
-            </div>
-          </div>
+          {detailLoading ? (
+             <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                <Loader2 className="w-10 h-10 animate-spin mb-4" />
+                <p className="text-sm font-bold uppercase tracking-widest">Loading Conversation...</p>
+             </div>
+          ) : !activeChatDetail ? (
+             <div className="flex flex-col items-center justify-center h-full text-slate-400 text-center px-10">
+                <div className="w-20 h-20 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-6">
+                  <MessageCircle className="w-10 h-10 opacity-20" />
+                </div>
+                <h4 className="text-lg font-bold text-slate-900 dark:text-white font-cabinet mb-1">No Chat Selected</h4>
+                <p className="text-sm">Click on a conversation to view the full message history and metadata.</p>
+             </div>
+          ) : (
+            activeChatDetail.messages?.map((msg: any) => (
+              <div key={msg.id} className={cn("flex gap-3 sm:gap-4", msg.role === "user" ? "justify-end" : "justify-start")}>
+                {msg.role !== "user" && (
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-rose-500/20">
+                    <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                )}
+                
+                <div className={cn("max-w-[85%] sm:max-w-[75%] space-y-2", msg.role === "user" && "text-right")}>
+                  <div className={cn(
+                    "p-4 sm:p-5 text-[13px] sm:text-sm leading-relaxed rounded-2xl shadow-sm",
+                    msg.role === "user" 
+                      ? "bg-rose-100 dark:bg-gradient-to-tr dark:from-rose-500 dark:to-pink-500 text-rose-900 dark:text-white rounded-tr-none text-left"
+                      : "bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-tl-none"
+                  )}>
+                    {msg.content}
+                  </div>
+                  <p className="text-[9px] font-bold text-slate-500 dark:text-slate-600 uppercase">
+                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.role === "user" ? (activeChatDetail.metadata?.user_name || "User") : "BolChat AI"}
+                  </p>
+                </div>
 
-          <div className="flex justify-end gap-3 sm:gap-4">
-            <div className="max-w-[85%] sm:max-w-[75%] space-y-2 text-right">
-              <div className="bg-rose-100 dark:bg-gradient-to-tr dark:from-rose-500 dark:to-pink-500 text-rose-900 dark:text-white p-4 sm:p-5 text-[13px] sm:text-sm leading-relaxed rounded-2xl rounded-tr-none shadow-sm text-left">
-                Buongiorno. Quando potete spedire il mio ordine? È l'ordine #LX-2024-089432.
+                {msg.role === "user" && (
+                   <div className={cn(
+                    "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0",
+                    getAvatarColor(activeChatDetail.id) === "orange" && "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-500",
+                    getAvatarColor(activeChatDetail.id) === "blue" && "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-500",
+                    getAvatarColor(activeChatDetail.id) === "purple" && "bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-500",
+                    getAvatarColor(activeChatDetail.id) === "teal" && "bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-500",
+                  )}>
+                    {getInitials(activeChatDetail.metadata?.user_name || "User")}
+                  </div>
+                )}
               </div>
-              <p className="text-[9px] font-bold text-slate-500 dark:text-slate-600 uppercase mr-1">14:31 • Marco Rossi</p>
-            </div>
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center text-orange-600 dark:text-orange-500 font-bold text-xs flex-shrink-0">
-              MR
-            </div>
-          </div>
-
-          <div className="flex justify-start gap-3 sm:gap-4">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-rose-500/20">
-              <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <div className="max-w-[85%] sm:max-w-[75%] space-y-2">
-              <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 sm:p-5 text-[13px] sm:text-sm leading-relaxed text-slate-700 dark:text-slate-200 rounded-2xl rounded-tl-none shadow-sm pb-5">
-                Ho controllato il tuo ordine #LX-2024-089432. Sarà spedito domani mattina alle 9:00 tramite corriere DHL Express. Riceverai un codice di tracciamento via email.
-              </div>
-              <p className="text-[9px] font-bold text-slate-500 dark:text-slate-600 uppercase ml-1">14:31 • BolChat AI</p>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 sm:gap-4">
-            <div className="max-w-[85%] sm:max-w-[75%] space-y-2 text-right">
-              <div className="bg-rose-100 dark:bg-gradient-to-tr dark:from-rose-500 dark:to-pink-500 text-rose-900 dark:text-white p-4 sm:p-5 text-[13px] sm:text-sm leading-relaxed rounded-2xl rounded-tr-none shadow-sm text-left">
-                Perfetto, grazie mille! Arriverà entro venerdì?
-              </div>
-              <p className="text-[9px] font-bold text-slate-500 dark:text-slate-600 uppercase mr-1">14:32 • Marco Rossi</p>
-            </div>
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center text-orange-600 dark:text-orange-500 font-bold text-xs flex-shrink-0">
-              MR
-            </div>
-          </div>
-
-          <div className="flex justify-start gap-3 sm:gap-4">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-rose-500/20">
-              <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <div className="max-w-[85%] sm:max-w-[75%] space-y-2">
-              <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 sm:p-5 text-[13px] sm:text-sm leading-relaxed text-slate-700 dark:text-slate-200 rounded-2xl rounded-tl-none shadow-sm pb-5">
-                Con la spedizione Express, la consegna stimata a Milano è prevista per giovedì 24 ottobre. Desideri che io verifichi l'indirizzo di consegna?
-              </div>
-              <p className="text-[9px] font-bold text-slate-500 dark:text-slate-600 uppercase ml-1">14:33 • BolChat AI</p>
-            </div>
-          </div>
-
-          <div className="flex justify-center my-10">
-            <div className="px-4 py-1.5 rounded-full bg-slate-200/50 dark:bg-white/5 border border-slate-300 dark:border-white/5 text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest animate-pulse">
-              User is typing...
-            </div>
-          </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Footer Area */}

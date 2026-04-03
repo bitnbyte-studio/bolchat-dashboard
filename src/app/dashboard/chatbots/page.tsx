@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { 
   Bot, Plus, Sparkles,
   ChevronDown, Info, Palette, Code, History, Eye, ChevronRight,
-  X, Send, Minimize2
+  X, Send, Minimize2, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getAgentsAction, createAgentAction, updateAgentAction, previewChatAction } from "@/app/actions/agents";
 
 export default function BotManagerPage() {
   const [activeTab, setActiveTab] = useState("Basic Info");
@@ -18,22 +19,86 @@ export default function BotManagerPage() {
     { from: "bot", text: "The Luxe Bomber is available in XS through 3XL in all colorways. Would you like me to check stock for a specific size?" },
   ]);
   const [isTyping, setIsTyping] = useState(false);
+  const [agents, setAgents] = useState<any[]>([]);
+  const [currentAgent, setCurrentAgent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saveLoading, setSaveLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  async function fetchAgents() {
+    setLoading(true);
+    const result = await getAgentsAction();
+    if (result.success && result.data && result.data.length > 0) {
+      setAgents(result.data);
+      setCurrentAgent(result.data[0]); // Initially select the first agent
+    } else {
+      setAgents([]);
+      setCurrentAgent(null);
+    }
+    setLoading(false);
+  }
+
+  async function handleSave() {
+    if (!currentAgent) return;
+    setSaveLoading(true);
+    const result = await updateAgentAction(currentAgent.id, {
+      name: currentAgent.name,
+      description: currentAgent.description,
+      system_prompt: currentAgent.system_prompt
+    });
+    if (result.success) {
+      // success toast or feedback
+    }
+    setSaveLoading(false);
+  }
+
+  async function handleCreate() {
+    if (agents.length > 0) return; // Constraint: Only one agent
+    const result = await createAgentAction({ name: "New Agent", description: "Default description", systemPrompt: "You are a helpful assistant." });
+    if (result.success) {
+      fetchAgents();
+    }
+  }
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [previewMessages, isTyping]);
 
-  function handlePreviewSend() {
-    if (!previewInput.trim()) return;
+  async function handlePreviewSend() {
+    if (!previewInput.trim() || !currentAgent) return;
     const userMsg = previewInput.trim();
     setPreviewInput("");
-    setPreviewMessages(prev => [...prev, { from: "user", text: userMsg }]);
+    
+    // Add user message to local state
+    const newMessages = [...previewMessages, { from: "user", text: userMsg }];
+    setPreviewMessages(newMessages);
+    
     setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      setPreviewMessages(prev => [...prev, { from: "bot", text: "Thanks for reaching out! Let me look that up for you right now. ✨" }]);
-    }, 1400);
+    
+    // Map history to backend format if needed
+    const history = previewMessages.map(m => ({ 
+      role: m.from === "bot" ? "assistant" : "user", 
+      content: m.text 
+    }));
+
+    const result = await previewChatAction(currentAgent.id, userMsg, history);
+    
+    setIsTyping(false);
+    if (result.success && result.data) {
+      setPreviewMessages(prev => [...prev, { 
+        from: "bot", 
+        text: result.data.answer
+      }]);
+    } else {
+      setPreviewMessages(prev => [...prev, { 
+        from: "bot", 
+        text: "Error: Could not get a response from the AI." 
+      }]);
+    }
   }
 
   const tabs = [
@@ -52,53 +117,55 @@ export default function BotManagerPage() {
       <section className="w-full xl:w-80 xl:border-r border-b xl:border-b-0 border-slate-200 dark:border-white/5 p-6 flex flex-col gap-6 bg-slate-50/30 dark:bg-transparent overflow-y-auto scrollbar-hide shrink-0 z-10">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white font-cabinet">My Chatbots</h3>
-          <button className="w-8 h-8 rounded-lg bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 shadow-md shadow-rose-200 dark:shadow-none transition-all cursor-pointer">
-            <Plus className="w-5 h-5" />
-          </button>
+          {agents.length === 0 && (
+            <button 
+              onClick={handleCreate}
+              className="w-8 h-8 rounded-lg bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 shadow-md shadow-rose-200 dark:shadow-none transition-all cursor-pointer"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         <div className="space-y-3">
-          {/* Active Bot */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-white/[0.03] border-2 border-rose-500 shadow-lg shadow-rose-100 dark:shadow-[0_0_20px_rgba(244,63,94,0.15)] flex items-center justify-between cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-pink-500 flex items-center justify-center text-white shrink-0">
-                <Bot className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">Luxe Assistant v2.1</p>
-                <p className="text-[10px] font-bold text-green-500 uppercase tracking-tighter mt-0.5">Online</p>
-              </div>
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
             </div>
-            <ChevronRight className="w-4 h-4 text-rose-500" />
-          </div>
-
-          {/* Inactive Bot 1 */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-transparent cursor-pointer hover:border-slate-300 dark:hover:border-white/10 opacity-80 hover:opacity-100 transition-all flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0">
-                <Bot className="w-5 h-5" />
+          ) : agents.length === 0 ? (
+            <p className="text-xs text-slate-500 text-center py-8">No agents yet. Create your first one!</p>
+          ) : (
+            agents.map((agent) => (
+              <div 
+                key={agent.id}
+                onClick={() => setCurrentAgent(agent)}
+                className={cn(
+                  "p-4 rounded-2xl bg-white dark:bg-white/[0.03] border flex items-center justify-between cursor-pointer transition-all",
+                  currentAgent?.id === agent.id 
+                    ? "border-2 border-rose-500 shadow-lg shadow-rose-100 dark:shadow-[0_0_20px_rgba(244,63,94,0.15)]" 
+                    : "border-slate-200 dark:border-transparent opacity-80 hover:opacity-100 hover:border-slate-300 dark:hover:border-white/10"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                    currentAgent?.id === agent.id ? "bg-gradient-to-tr from-rose-500 to-pink-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                  )}>
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className={cn("text-sm font-bold truncate", currentAgent?.id === agent.id ? "text-slate-900 dark:text-white" : "text-slate-700 dark:text-slate-300")}>
+                      {agent.name}
+                    </p>
+                    <p className={cn("text-[10px] font-bold uppercase tracking-tighter mt-0.5", agent.status === 'PUBLISHED' ? "text-green-500" : "text-slate-400")}>
+                      {agent.status}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className={cn("w-4 h-4", currentAgent?.id === agent.id ? "text-rose-500" : "text-slate-300 dark:text-slate-600")} />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 truncate">Support Hero</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">Offline</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600" />
-          </div>
-
-          {/* Inactive Bot 2 */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-transparent cursor-pointer hover:border-slate-300 dark:hover:border-white/10 opacity-80 hover:opacity-100 transition-all flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0">
-                <Bot className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 truncate">Sales Copilot</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">In Draft</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600" />
-          </div>
+            ))
+          )}
         </div>
 
         <div className="mt-auto pt-8">
@@ -133,11 +200,13 @@ export default function BotManagerPage() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white tracking-tight font-cabinet">Luxe Assistant v2.1</h3>
-                  <span className="px-2 py-0.5 rounded-md bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-500 text-[10px] font-bold uppercase tracking-widest hidden sm:block">Active</span>
+                  <h3 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white tracking-tight font-cabinet">{currentAgent?.name || 'Select an Agent'}</h3>
+                  {currentAgent?.status === 'PUBLISHED' && (
+                    <span className="px-2 py-0.5 rounded-md bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-500 text-[10px] font-bold uppercase tracking-widest hidden sm:block">Active</span>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-3 lg:gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest pt-1 lg:pt-0">
-                  <p className="normal-case tracking-normal font-normal">Created on Oct 12, 2024 • v2.1.4</p>
+                  <p className="normal-case tracking-normal font-normal">Created on {currentAgent ? new Date(currentAgent.created_at).toLocaleDateString() : 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -153,8 +222,12 @@ export default function BotManagerPage() {
               <button className="px-5 py-2.5 bg-white xl:bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl font-bold text-sm transition-all text-slate-700 dark:text-white cursor-pointer shrink-0">
                 Deploy
               </button>
-              <button className="px-5 py-2.5 bg-slate-900 dark:bg-rose-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-200 dark:shadow-rose-500/20 hover:bg-slate-800 dark:hover:bg-rose-600 hover:scale-105 transition-all cursor-pointer shrink-0">
-                Save
+              <button 
+                onClick={handleSave}
+                disabled={!currentAgent || saveLoading}
+                className="px-5 py-2.5 bg-slate-900 dark:bg-rose-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-200 dark:shadow-rose-500/20 hover:bg-slate-800 dark:hover:bg-rose-600 hover:scale-105 transition-all cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saveLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Save'}
               </button>
             </div>
           </div>
@@ -188,7 +261,9 @@ export default function BotManagerPage() {
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] ml-1">Chatbot Display Name</label>
                   <input 
                     type="text" 
-                    defaultValue="Luxe Assistant v2.1" 
+                    value={currentAgent?.name || ''} 
+                    onChange={(e) => setCurrentAgent({...currentAgent, name: e.target.value})}
+                    placeholder="Enter agent name"
                     className="w-full h-14 px-6 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none"
                   />
                 </div>
@@ -210,7 +285,9 @@ export default function BotManagerPage() {
                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] ml-1">Bot Description / Tagline</label>
                 <textarea 
                   rows={3} 
-                  defaultValue="Your premium concierge for all things Mode Luxe. Specializing in sizing, international shipping, and style recommendations."
+                  value={currentAgent?.description || ''}
+                  onChange={(e) => setCurrentAgent({...currentAgent, description: e.target.value})}
+                  placeholder="Enter agent description"
                   className="w-full p-6 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none resize-none leading-relaxed"
                 />
               </div>
@@ -258,8 +335,12 @@ export default function BotManagerPage() {
               </div>
 
               <div className="flex justify-end pt-6 border-t border-slate-100 dark:border-white/5">
-                <button className="px-8 py-4 bg-rose-500 text-white rounded-2xl font-bold text-sm shadow-xl shadow-rose-200 dark:shadow-rose-500/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
-                  Save & Continue
+                <button 
+                  onClick={handleSave}
+                  disabled={!currentAgent || saveLoading}
+                  className="px-8 py-4 bg-rose-500 text-white rounded-2xl font-bold text-sm shadow-xl shadow-rose-200 dark:shadow-rose-500/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {saveLoading ? 'Saving...' : 'Save & Continue'}
                 </button>
               </div>
 

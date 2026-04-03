@@ -49,7 +49,17 @@ export async function loginAction(prevState: any, formData: FormData) {
              secure: process.env.NODE_ENV === "production",
              sameSite: "lax",
              path: "/",
-             maxAge: 60 * 60 * 24 * 7 // 7 days expiration
+             maxAge: 60 * 60 * 24 * 7 // 7 days expiration (or based on token)
+         });
+      }
+
+      if (data.data.refreshToken) {
+         cookieStore.set("refreshToken", data.data.refreshToken, {
+             httpOnly: true,
+             secure: process.env.NODE_ENV === "production",
+             sameSite: "lax",
+             path: "/",
+             maxAge: 60 * 60 * 24 * 30 // 30 days expiration
          });
       }
 
@@ -114,7 +124,7 @@ export async function forceResetPasswordAction(prevState: any, formData: FormDat
     const res = await fetch(`${baseUrl}/api/v1/auth/force-reset`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tempToken, newPassword }),
+      body: JSON.stringify({ tempToken: tempToken, newPassword: newPassword }),
       cache: "no-store",
     });
 
@@ -138,7 +148,18 @@ export async function forceResetPasswordAction(prevState: any, formData: FormDat
           path: "/",
           maxAge: 60 * 60 * 24 * 7
       });
-      // Clear tempToken map
+
+      if (data.data.refreshToken) {
+          cookieStore.set("refreshToken", data.data.refreshToken, {
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax",
+              path: "/",
+              maxAge: 60 * 60 * 24 * 30
+          });
+      }
+      
+      // Clear tempToken
       cookieStore.delete("tempToken");
 
       return { success: true, redirect: "/dashboard" };
@@ -148,5 +169,28 @@ export async function forceResetPasswordAction(prevState: any, formData: FormDat
   } catch (error) {
     console.error("Force reset server action error:", error);
     return { error: "Network communication error." };
+  }
+}
+
+export async function getMeAction() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+  const baseUrl = process.env.NEXT_BASE_URL || "http://localhost:8000";
+
+  if (!token) return { success: false, error: "Not authenticated" };
+
+  try {
+    const res = await fetch(`${baseUrl}/api/v1/auth/me`, {
+      headers: { "Authorization": `Bearer ${token}` },
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data?.detail || "Failed to fetch user" };
+
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("getMeAction error:", error);
+    return { success: false, error: "Network error" };
   }
 }

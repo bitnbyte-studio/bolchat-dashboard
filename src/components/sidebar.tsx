@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Bot, LineChart, UserPlus, MessageSquare, Settings, LogOut, MessageCircle, LayoutDashboard } from "lucide-react";
+import { BookOpen, Bot, LineChart, UserPlus, MessageSquare, Settings, LogOut, MessageCircle, LayoutDashboard, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BolchatLogo } from "./BolchatLogo";
+import { getMeAction } from "@/app/actions/auth";
+import { useState, useEffect } from "react";
 
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -17,6 +19,13 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    getMeAction().then(res => {
+      if (res.success) setUser(res.data);
+    });
+  }, []);
 
   return (
     <aside className="group fixed inset-y-0 left-0 z-50 hidden lg:flex flex-col bg-white dark:bg-[#0a0f1e]/80 dark:backdrop-blur-2xl border-r border-slate-200 dark:border-white/10 w-20 hover:w-72 shadow-xl transition-[width] duration-300 cubic-bezier(0.4, 0, 0.2, 1) overflow-hidden">
@@ -25,7 +34,7 @@ export function Sidebar() {
         <BolchatLogo size="md" textClassName="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden" />
       </div>
 
-      <nav className="flex-1 space-y-2 px-3">
+      <nav className="flex-1 space-y-2 px-3 overflow-y-auto scrollbar-hide">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -54,6 +63,22 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto p-3 space-y-2 border-t border-slate-100 dark:border-white/10">
+        {user?.role === "superadmin" && (
+          <Link
+            href="/dashboard/superadmin"
+            className={cn(
+              "flex items-center h-12 gap-4 px-3 rounded-xl transition-all relative overflow-hidden",
+              pathname === "/dashboard/superadmin"
+                ? "bg-indigo-50 dark:bg-indigo-500/10 border-l-[4px] border-indigo-500 text-indigo-500"
+                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white border-l-[4px] border-transparent"
+            )}
+          >
+            <ShieldCheck className="w-6 h-6 shrink-0" />
+            <span className="font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+              BolChat Hub
+            </span>
+          </Link>
+        )}
         <Link
           href="/dashboard/settings"
           className="flex items-center h-12 gap-4 px-3 rounded-xl transition-all text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white border-l-[4px] border-transparent"
