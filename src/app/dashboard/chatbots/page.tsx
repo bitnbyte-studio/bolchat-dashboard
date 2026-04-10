@@ -34,6 +34,81 @@ const DEFAULT_SETTINGS: AgentSettings = {
   language: "en",
 };
 
+const LANGUAGES = [
+  { code: "en", label: "English (US)" },
+  { code: "hi", label: "Hindi" },
+  { code: "mr", label: "Marathi" },
+  { code: "gu", label: "Gujarati" },
+  { code: "bn", label: "Bengali" },
+  { code: "te", label: "Telugu" },
+  { code: "ta", label: "Tamil" },
+  { code: "kn", label: "Kannada" },
+  { code: "ml", label: "Malayalam" },
+  { code: "pa", label: "Punjabi" },
+  { code: "ur", label: "Urdu" },
+  { code: "es", label: "Spanish" },
+  { code: "fr", label: "French" },
+  { code: "de", label: "German" },
+  { code: "it", label: "Italian" },
+  { code: "pt", label: "Portuguese" },
+  { code: "zh", label: "Chinese" },
+  { code: "ja", label: "Japanese" },
+  { code: "ar", label: "Arabic" },
+  { code: "ru", label: "Russian" },
+];
+
+function LanguageSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selected = LANGUAGES.find(l => l.code === value) || LANGUAGES[0];
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full h-10 px-4 flex justify-between items-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white hover:border-slate-300 dark:hover:border-white/20 focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none"
+      >
+        <span>{selected.label}</span>
+        <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-2 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="max-h-60 overflow-y-auto scrollbar-hide py-1">
+            {LANGUAGES.map((lang) => (
+              <button
+                key={lang.code}
+                type="button"
+                onClick={() => { onChange(lang.code); setOpen(false); }}
+                className={cn(
+                  "w-full px-4 py-2 text-left text-sm transition-colors",
+                  value === lang.code 
+                    ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium" 
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                )}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const TABS = ["Basic Info", "Knowledge", "Widget", "Deploy"] as const;
 type Tab = (typeof TABS)[number];
 
@@ -425,571 +500,561 @@ export default function BotManagerPage() {
 
         {/* Left: Tab content */}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div className="flex-1 overflow-y-auto scrollbar-hide p-4 lg:p-5 2xl:p-8 space-y-5 2xl:space-y-8">
+          <div className="flex-1 overflow-y-auto scrollbar-hide p-4 lg:p-5 2xl:p-8 space-y-5 2xl:space-y-8">
 
-          {/* Hero Card */}
-          <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-4 2xl:p-6 rounded-2xl flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 2xl:gap-6 shadow-sm relative z-20">
-            <div className="flex items-center gap-3 2xl:gap-5 w-full xl:w-auto">
-              <div className="w-11 h-11 2xl:w-16 2xl:h-16 rounded-xl bg-linear-to-tr from-rose-500 to-pink-500 flex items-center justify-center shadow-lg 2xl:shadow-xl shadow-rose-200 dark:shadow-rose-500/30 ring-2 2xl:ring-4 ring-white dark:ring-white/5 shrink-0">
-                <Bot className="w-5 h-5 2xl:w-8 2xl:h-8 text-white" />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{currentAgent?.name || (isDraft ? "New Agent" : "Select an Agent")}</h3>
-                  {isDraft && (
-                    <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-widest hidden sm:block">Draft</span>
-                  )}
-                  {isPublished && (
-                    <span className="px-2 py-0.5 rounded-md bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-500 text-[10px] font-bold uppercase tracking-widest hidden sm:block">Live</span>
-                  )}
+            {/* Hero Card */}
+            <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-4 2xl:p-6 rounded-2xl flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 2xl:gap-6 shadow-sm relative z-20">
+              <div className="flex items-center gap-3 2xl:gap-5 w-full xl:w-auto">
+                <div className="w-11 h-11 2xl:w-16 2xl:h-16 rounded-xl bg-linear-to-tr from-rose-500 to-pink-500 flex items-center justify-center shadow-lg 2xl:shadow-xl shadow-rose-200 dark:shadow-rose-500/30 ring-2 2xl:ring-4 ring-white dark:ring-white/5 shrink-0">
+                  <Bot className="w-5 h-5 2xl:w-8 2xl:h-8 text-white" />
                 </div>
-                <p className="text-xs text-slate-500">
-                  {isDraft ? "Fill in the details below and click Save & Next" : `Created on ${currentAgent ? new Date(currentAgent.created_at).toLocaleDateString() : "N/A"}`}
-                </p>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{currentAgent?.name || (isDraft ? "New Agent" : "Select an Agent")}</h3>
+                    {isDraft && (
+                      <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-widest hidden sm:block">Draft</span>
+                    )}
+                    {isPublished && (
+                      <span className="px-2 py-0.5 rounded-md bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-500 text-[10px] font-bold uppercase tracking-widest hidden sm:block">Live</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {isDraft ? "Fill in the details below and click Save & Next" : `Created on ${currentAgent ? new Date(currentAgent.created_at).toLocaleDateString() : "N/A"}`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 w-full xl:w-auto">
+                <button
+                  onClick={() => setShowPreview(true)}
+                  disabled={!currentAgent?.id}
+                  className="px-5 py-2.5 bg-white dark:bg-white/5 text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/10 hover:scale-105 transition-all cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 xl:hidden"
+                >
+                  <Eye className="w-4 h-4" /> Test Agent
+                </button>
+                <button
+                  onClick={() => handleSave(false)}
+                  disabled={!canSave}
+                  className="px-5 py-2.5 bg-slate-900 dark:bg-rose-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-200 dark:shadow-rose-500/20 hover:bg-slate-800 dark:hover:bg-rose-600 hover:scale-105 transition-all cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : isDraft ? "Create Agent" : "Save"}
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-3 w-full xl:w-auto">
-              <button
-                onClick={() => setShowPreview(true)}
-                disabled={!currentAgent?.id}
-                className="px-5 py-2.5 bg-white dark:bg-white/5 text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/10 hover:scale-105 transition-all cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 xl:hidden"
-              >
-                <Eye className="w-4 h-4" /> Test Agent
-              </button>
-              <button
-                onClick={() => handleSave(false)}
-                disabled={!canSave}
-                className="px-5 py-2.5 bg-slate-900 dark:bg-rose-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-200 dark:shadow-rose-500/20 hover:bg-slate-800 dark:hover:bg-rose-600 hover:scale-105 transition-all cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : isDraft ? "Create Agent" : "Save"}
-              </button>
+
+            {/* Tab Navigation */}
+            <div className="flex border-b border-slate-200 dark:border-white/5 px-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
+              {TABS.map((tab, idx) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={cn(
+                    "px-4 py-3 text-sm font-bold transition-colors cursor-pointer relative flex items-center gap-2",
+                    activeTab === tab
+                      ? "text-rose-500"
+                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  )}
+                >
+                  <span className={cn(
+                    "w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center",
+                    activeTab === tab ? "bg-rose-500 text-white" : "bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400"
+                  )}>
+                    {idx + 1}
+                  </span>
+                  {tab}
+                  {activeTab === tab && (
+                    <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-rose-500" />
+                  )}
+                </button>
+              ))}
             </div>
-          </div>
 
-          {/* Tab Navigation */}
-          <div className="flex border-b border-slate-200 dark:border-white/5 px-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
-            {TABS.map((tab, idx) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "px-4 py-3 text-sm font-bold transition-colors cursor-pointer relative flex items-center gap-2",
-                  activeTab === tab
-                    ? "text-rose-500"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-              >
-                <span className={cn(
-                  "w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center",
-                  activeTab === tab ? "bg-rose-500 text-white" : "bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400"
-                )}>
-                  {idx + 1}
-                </span>
-                {tab}
-                {activeTab === tab && (
-                  <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-rose-500" />
-                )}
-              </button>
-            ))}
-          </div>
+            {/* Tab Content */}
+            <div className="p-4 sm:p-6 space-y-8 animate-fade-in">
 
-          {/* Tab Content */}
-          <div className="p-4 sm:p-6 space-y-8 animate-fade-in">
+              {/* ─── Basic Info Tab ─── */}
+              {activeTab === "Basic Info" && (
+                <div className="space-y-8">
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Assistant Name</label>
+                      <input
+                        type="text"
+                        value={currentAgent?.name || ""}
+                        onChange={(e) => setCurrentAgent({ ...currentAgent, name: e.target.value })}
+                        placeholder="e.g. Bolchat AI"
+                        className="w-full h-10 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none"
+                      />
+                      <p className="text-[10px] text-slate-400 ml-1">This name appears in the chat widget header.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Primary Language</label>
+                        <LanguageSelect
+                          value={agentSettings().language || "en"}
+                          onChange={(val) => updateSettings({ language: val })}
+                        />
+                    </div>
+                  </div>
 
-            {/* ─── Basic Info Tab ─── */}
-            {activeTab === "Basic Info" && (
-              <div className="space-y-8">
-                <div className="grid md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Assistant Name</label>
-                    <input
-                      type="text"
-                      value={currentAgent?.name || ""}
-                      onChange={(e) => setCurrentAgent({ ...currentAgent, name: e.target.value })}
-                      placeholder="e.g. Bhakti Support Bot"
-                      className="w-full h-10 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none"
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Description / Tagline</label>
+                    <textarea
+                      rows={2}
+                      value={currentAgent?.description || ""}
+                      onChange={(e) => setCurrentAgent({ ...currentAgent, description: e.target.value })}
+                      placeholder="A short description of what this agent does"
+                      className="w-full p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none resize-none leading-relaxed"
                     />
-                    <p className="text-[10px] text-slate-400 ml-1">This name appears in the chat widget header.</p>
                   </div>
+
                   <div className="space-y-2">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Primary Language</label>
-                    <div className="relative">
-                      <select
-                        value={agentSettings().language || "en"}
-                        onChange={(e) => updateSettings({ language: e.target.value })}
-                        className="w-full h-10 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none appearance-none cursor-pointer"
-                      >
-                        <option value="en">English (US)</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="de">German</option>
-                        <option value="hi">Hindi</option>
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-4 h-4" />
-                    </div>
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">System Prompt</label>
+                    <textarea
+                      rows={5}
+                      value={currentAgent?.system_prompt || ""}
+                      onChange={(e) => setCurrentAgent({ ...currentAgent, system_prompt: e.target.value })}
+                      placeholder="Define your agent's personality and behavior. e.g. 'You are a friendly customer support agent for a SaaS company...'"
+                      className="w-full p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none resize-none leading-relaxed font-mono text-[13px]"
+                    />
+                    <p className="text-[10px] text-slate-400 ml-1">This prompt shapes how your agent responds. If left empty, a sensible default is used.</p>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Description / Tagline</label>
-                  <textarea
-                    rows={2}
-                    value={currentAgent?.description || ""}
-                    onChange={(e) => setCurrentAgent({ ...currentAgent, description: e.target.value })}
-                    placeholder="A short description of what this agent does"
-                    className="w-full p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none resize-none leading-relaxed"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">System Prompt</label>
-                  <textarea
-                    rows={5}
-                    value={currentAgent?.system_prompt || ""}
-                    onChange={(e) => setCurrentAgent({ ...currentAgent, system_prompt: e.target.value })}
-                    placeholder="Define your agent's personality and behavior. e.g. 'You are a friendly customer support agent for a SaaS company...'"
-                    className="w-full p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none resize-none leading-relaxed font-mono text-[13px]"
-                  />
-                  <p className="text-[10px] text-slate-400 ml-1">This prompt shapes how your agent responds. If left empty, a sensible default is used.</p>
-                </div>
-
-                {/* Response Tuning */}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4">Response Tuning</h4>
-                  <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Temperature</label>
-                        <span className="text-sm font-bold text-rose-500">{(agentSettings().temperature ?? 0.4).toFixed(2)}</span>
-                      </div>
-                      <input
-                        type="range" min="0" max="1" step="0.05"
-                        value={agentSettings().temperature ?? 0.4}
-                        onChange={(e) => updateSettings({ temperature: Number(e.target.value) })}
-                        className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
-                      />
-                      <div className="flex justify-between">
-                        <span className="text-[10px] text-slate-400">Precise</span>
-                        <span className="text-[10px] text-slate-400">Creative</span>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Max Tokens</label>
-                        <span className="text-sm font-bold text-rose-500">{agentSettings().max_tokens}</span>
-                      </div>
-                      <input
-                        type="range" min="100" max="4096" step="50"
-                        value={agentSettings().max_tokens}
-                        onChange={(e) => updateSettings({ max_tokens: Number(e.target.value) })}
-                        className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
-                      />
-                      <div className="flex justify-between">
-                        <span className="text-[10px] text-slate-400">Short</span>
-                        <span className="text-[10px] text-slate-400">Detailed</span>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Confidence Threshold</label>
-                        <span className="text-sm font-bold text-rose-500">{agentSettings().confidence_threshold}%</span>
-                      </div>
-                      <input
-                        type="range" min="0" max="100"
-                        value={agentSettings().confidence_threshold}
-                        onChange={(e) => updateSettings({ confidence_threshold: Number(e.target.value) })}
-                        className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
-                      />
-                      <div className="flex justify-between">
-                        <span className="text-[10px] text-slate-400">Loose</span>
-                        <span className="text-[10px] text-slate-400">Strict</span>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">RAG Top-K Results</label>
-                        <span className="text-sm font-bold text-rose-500">{agentSettings().top_k ?? 5}</span>
-                      </div>
-                      <input
-                        type="range" min="1" max="20"
-                        value={agentSettings().top_k ?? 5}
-                        onChange={(e) => updateSettings({ top_k: Number(e.target.value) })}
-                        className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
-                      />
-                      <div className="flex justify-between">
-                        <span className="text-[10px] text-slate-400">Focused (1)</span>
-                        <span className="text-[10px] text-slate-400">Broad (20)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/20 flex items-start gap-4">
-                  <Info className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                  {/* Response Tuning */}
                   <div>
-                    <h5 className="text-sm font-bold text-rose-900 dark:text-white">Tip</h5>
-                    <p className="text-xs text-rose-700 dark:text-slate-400 mt-0.5 leading-relaxed">
-                      The system prompt is the most powerful knob. Use it to control tone, language, and which topics the agent handles.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ─── Knowledge Tab ─── */}
-            {activeTab === "Knowledge" && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Knowledge Base</h3>
-                  <p className="text-sm text-slate-500">Your agent automatically searches all uploaded documents in your organization when answering questions.</p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-green-50 dark:bg-green-500/5 border border-green-200 dark:border-green-500/20 flex items-center gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                  <div>
-                    <p className="text-sm font-bold text-green-800 dark:text-green-300">Auto-connected</p>
-                    <p className="text-xs text-green-700 dark:text-green-400 mt-0.5">All your uploaded documents are automatically available to this agent. No manual linking required.</p>
-                  </div>
-                </div>
-
-                {kbLoading ? (
-                  <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
-                ) : allKBs.length === 0 ? (
-                  <div className="py-10 text-center border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
-                    <Database className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">No documents uploaded yet</p>
-                    <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
-                      Go to the <strong>Knowledge</strong> page in the sidebar to create a knowledge base and upload your documents.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Your Document Collections</h4>
-                    <div className="space-y-3">
-                      {allKBs.map((kb: any) => {
-                        const docCount = kb.doc_count ?? 0;
-                        return (
-                          <div key={kb.id} className="p-4 rounded-xl bg-white dark:bg-white/3 border border-slate-200 dark:border-white/5 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0">
-                              <Database className="w-5 h-5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{kb.name}</p>
-                              <p className="text-[10px] text-slate-400 mt-0.5">
-                                {docCount} {docCount === 1 ? "document" : "documents"} indexed
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-500/10">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                              <span className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest">Active</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/3 border border-slate-100 dark:border-white/5 flex items-start gap-4">
-                  <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                  <div>
-                    <h5 className="text-sm font-bold text-slate-700 dark:text-slate-300">How it works</h5>
-                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                      When a user asks a question, your agent searches through all your uploaded documents to find the most relevant information. Upload more documents on the <strong>Knowledge</strong> page to expand what your agent knows.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ─── Widget Tab ─── */}
-            {activeTab === "Widget" && (
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Widget Customization</h3>
-                  <p className="text-sm text-slate-500">Design how your chat widget looks and behaves on your website.</p>
-                </div>
-
-                {widgetLoading ? (
-                  <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Brand Color */}
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Brand Color</label>
-                      <div className="flex gap-4 items-center">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4">Response Tuning</h4>
+                    <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Temperature</label>
+                          <span className="text-sm font-bold text-rose-500">{(agentSettings().temperature ?? 0.4).toFixed(2)}</span>
+                        </div>
                         <input
-                          type="color"
-                          value={widget?.brand_color || "#f43f5e"}
-                          onChange={(e) => setWidget({ ...widget, brand_color: e.target.value })}
-                          className="w-12 h-12 rounded-xl bg-transparent border-0 outline-none cursor-pointer p-0"
+                          type="range" min="0" max="1" step="0.05"
+                          value={agentSettings().temperature ?? 0.4}
+                          onChange={(e) => updateSettings({ temperature: Number(e.target.value) })}
+                          className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
                         />
+                        <div className="flex justify-between">
+                          <span className="text-[10px] text-slate-400">Precise</span>
+                          <span className="text-[10px] text-slate-400">Creative</span>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Max Tokens</label>
+                          <span className="text-sm font-bold text-rose-500">{agentSettings().max_tokens}</span>
+                        </div>
                         <input
-                          type="text"
-                          value={widget?.brand_color || "#f43f5e"}
-                          onChange={(e) => setWidget({ ...widget, brand_color: e.target.value })}
-                          className="flex-1 h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm font-mono dark:text-white outline-none focus:ring-2 focus:ring-rose-500/20"
+                          type="range" min="100" max="4096" step="50"
+                          value={agentSettings().max_tokens}
+                          onChange={(e) => updateSettings({ max_tokens: Number(e.target.value) })}
+                          className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
                         />
+                        <div className="flex justify-between">
+                          <span className="text-[10px] text-slate-400">Short</span>
+                          <span className="text-[10px] text-slate-400">Detailed</span>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Confidence Threshold</label>
+                          <span className="text-sm font-bold text-rose-500">{agentSettings().confidence_threshold}%</span>
+                        </div>
+                        <input
+                          type="range" min="0" max="100"
+                          value={agentSettings().confidence_threshold}
+                          onChange={(e) => updateSettings({ confidence_threshold: Number(e.target.value) })}
+                          className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                        />
+                        <div className="flex justify-between">
+                          <span className="text-[10px] text-slate-400">Loose</span>
+                          <span className="text-[10px] text-slate-400">Strict</span>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">RAG Top-K Results</label>
+                          <span className="text-sm font-bold text-rose-500">{agentSettings().top_k ?? 5}</span>
+                        </div>
+                        <input
+                          type="range" min="1" max="20"
+                          value={agentSettings().top_k ?? 5}
+                          onChange={(e) => updateSettings({ top_k: Number(e.target.value) })}
+                          className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                        />
+                        <div className="flex justify-between">
+                          <span className="text-[10px] text-slate-400">Focused (1)</span>
+                          <span className="text-[10px] text-slate-400">Broad (20)</span>
+                        </div>
                       </div>
                     </div>
-
-                    {/* Welcome Message */}
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Welcome Message</label>
-                      <textarea
-                        value={widget?.greeting || ""}
-                        onChange={(e) => setWidget({ ...widget, greeting: e.target.value })}
-                        placeholder="e.g. Hi! How can we help you today?"
-                        className="w-full h-24 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm dark:text-white resize-none outline-none focus:ring-2 focus:ring-rose-500/20"
-                      />
-                    </div>
-
-                    {/* Launcher Icon */}
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Launcher Icon</label>
-                      <div className="grid grid-cols-5 gap-2">
-                        {LAUNCHER_ICONS.map(({ id, label, Icon }) => (
-                          <button
-                            key={id}
-                            onClick={() => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), launcher_icon: id } })}
-                            className={cn(
-                              "flex flex-col items-center gap-1.5 py-3 rounded-xl border transition-all cursor-pointer",
-                              getWidgetTheme(widget).launcher_icon === id
-                                ? "border-rose-500 bg-rose-50 dark:bg-rose-500/10"
-                                : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20"
-                            )}
-                          >
-                            <div
-                              className="w-9 h-9 rounded-full flex items-center justify-center"
-                              style={{ background: getWidgetTheme(widget).launcher_icon === id ? brandColor : "#e2e8f0" }}
-                            >
-                              <Icon className={cn("w-4 h-4", getWidgetTheme(widget).launcher_icon === id ? "text-white" : "text-slate-500")} />
-                            </div>
-                            <span className={cn("text-[9px] font-bold uppercase tracking-wider", getWidgetTheme(widget).launcher_icon === id ? "text-rose-500" : "text-slate-400")}>{label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Widget Position */}
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Widget Position</label>
-                      <div className="flex gap-3">
-                        {(["bottom_right", "bottom_left"] as const).map((pos) => (
-                          <button
-                            key={pos}
-                            onClick={() => setWidget({ ...widget, position: pos })}
-                            className={cn(
-                              "flex-1 py-3 rounded-xl text-sm font-bold border transition-all cursor-pointer",
-                              widget?.position === pos
-                                ? "border-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-500"
-                                : "border-slate-200 dark:border-white/10 text-slate-500 hover:border-slate-300 dark:hover:border-white/20"
-                            )}
-                          >
-                            {pos === "bottom_right" ? "Bottom Right" : "Bottom Left"}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Chat Panel Height */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Chat Panel Height</label>
-                        <span className="text-sm font-bold text-rose-500">{getWidgetTheme(widget).chat_height}px</span>
-                      </div>
-                      <input
-                        type="range" min="350" max="700" step="10"
-                        value={getWidgetTheme(widget).chat_height}
-                        onChange={(e) => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), chat_height: Number(e.target.value) } })}
-                        className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
-                      />
-                      <div className="flex justify-between">
-                        <span className="text-[10px] text-slate-400">Compact (350px)</span>
-                        <span className="text-[10px] text-slate-400">Tall (700px)</span>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/3 border border-slate-100 dark:border-white/5 flex items-start gap-3">
-                      <Palette className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                      <p className="text-xs text-slate-500 leading-relaxed">Changes are reflected in the widget preview on the right in real time. Click <strong>Save Widget</strong> to persist.</p>
-                    </div>
-
-                    <button
-                      onClick={handleWidgetSave}
-                      disabled={widgetSaveLoading}
-                      className="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      {widgetSaveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      Save Widget
-                    </button>
                   </div>
-                )}
-              </div>
-            )}
 
-            {/* ─── Deploy Tab ─── */}
-            {activeTab === "Deploy" && (
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Deploy Your Agent</h3>
-                  <p className="text-sm text-slate-500">Publish your agent and embed it on your website.</p>
-                </div>
-
-                {/* Readiness Checklist */}
-                <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Deployment Checklist</h4>
-                  <div className="space-y-3">
-                    {[
-                      { label: "Configure your agent (Basic Info)", done: !!currentAgent?.name?.trim() },
-                      { label: "Upload documents (Knowledge page)", done: hasKBs },
-                      { label: "Publish your agent", done: isPublished },
-                      { label: "Create an API key", done: hasApiKey },
-                    ].map((item) => (
-                      <div key={item.label} className="flex items-center gap-3">
-                        {item.done ? (
-                          <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600 shrink-0" />
-                        )}
-                        <span className={cn("text-sm", item.done ? "text-slate-900 dark:text-white" : "text-slate-400")}>{item.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Publish */}
-                <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/20 flex items-start gap-4">
+                    <Info className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Agent Status</h4>
-                      <p className="text-xs text-slate-400 mt-0.5">{isPublished ? "Your agent is live and ready to serve users." : "Publish your agent to make it accessible via the widget."}</p>
+                      <h5 className="text-sm font-bold text-rose-900 dark:text-white">Tip</h5>
+                      <p className="text-xs text-rose-700 dark:text-slate-400 mt-0.5 leading-relaxed">
+                        The system prompt is the most powerful knob. Use it to control tone, language, and which topics the agent handles.
+                      </p>
                     </div>
-                    <button
-                      onClick={handlePublish}
-                      disabled={publishLoading || isPublished}
-                      className={cn(
-                        "flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all",
-                        isPublished
-                          ? "bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 cursor-default"
-                          : "bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20"
-                      )}
-                    >
-                      {publishLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
-                      {isPublished ? "Published" : "Publish Agent"}
-                    </button>
                   </div>
                 </div>
+              )}
 
-                {/* API Keys */}
-                <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">API Keys</h4>
-                      <p className="text-xs text-slate-400 mt-0.5">Used to authenticate the widget on your website.</p>
-                    </div>
-                    <button
-                      onClick={() => setShowKeyModal(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl text-sm font-bold text-slate-700 dark:text-white transition-all"
-                    >
-                      <Plus className="w-4 h-4" /> Create Key
-                    </button>
+              {/* ─── Knowledge Tab ─── */}
+              {activeTab === "Knowledge" && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Knowledge Base</h3>
+                    <p className="text-sm text-slate-500">Your agent automatically searches all uploaded documents in your organization when answering questions.</p>
                   </div>
-                  {apiKeysLoading ? (
-                    <div className="py-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
-                  ) : apiKeys.length === 0 ? (
-                    <div className="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-xl">
-                      No API keys yet. Create one to use the embed script.
+
+                  <div className="p-4 rounded-xl bg-green-50 dark:bg-green-500/5 border border-green-200 dark:border-green-500/20 flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-green-800 dark:text-green-300">Auto-connected</p>
+                      <p className="text-xs text-green-700 dark:text-green-400 mt-0.5">All your uploaded documents are automatically available to this agent. No manual linking required.</p>
+                    </div>
+                  </div>
+
+                  {kbLoading ? (
+                    <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+                  ) : allKBs.length === 0 ? (
+                    <div className="py-10 text-center border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+                      <Database className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">No documents uploaded yet</p>
+                      <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                        Go to the <strong>Knowledge</strong> page in the sidebar to create a knowledge base and upload your documents.
+                      </p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      {apiKeys.map((key: any) => (
-                        <div key={key.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Key className="w-4 h-4 text-slate-400" />
-                            <span className="text-sm font-bold text-slate-900 dark:text-white">{key.name}</span>
-                          </div>
-                          <span className="text-xs text-slate-400 font-mono">{key.prefix}........</span>
+                    <>
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Your Document Collections</h4>
+                      <div className="space-y-3">
+                        {allKBs.map((kb: any) => {
+                          const docCount = kb.doc_count ?? 0;
+                          return (
+                            <div key={kb.id} className="p-4 rounded-xl bg-white dark:bg-white/3 border border-slate-200 dark:border-white/5 flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0">
+                                <Database className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{kb.name}</p>
+                                <p className="text-[10px] text-slate-400 mt-0.5">
+                                  {docCount} {docCount === 1 ? "document" : "documents"} indexed
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-500/10">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                                <span className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest">Active</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/3 border border-slate-100 dark:border-white/5 flex items-start gap-4">
+                    <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                    <div>
+                      <h5 className="text-sm font-bold text-slate-700 dark:text-slate-300">How it works</h5>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                        When a user asks a question, your agent searches through all your uploaded documents to find the most relevant information. Upload more documents on the <strong>Knowledge</strong> page to expand what your agent knows.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ─── Widget Tab ─── */}
+              {activeTab === "Widget" && (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Widget Customization</h3>
+                    <p className="text-sm text-slate-500">Design how your chat widget looks and behaves on your website.</p>
+                  </div>
+
+                  {widgetLoading ? (
+                    <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Brand Color */}
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Brand Color</label>
+                        <div className="flex gap-4 items-center">
+                          <input
+                            type="color"
+                            value={widget?.brand_color || "#f43f5e"}
+                            onChange={(e) => setWidget({ ...widget, brand_color: e.target.value })}
+                            className="w-12 h-12 rounded-xl bg-transparent border-0 outline-none cursor-pointer p-0"
+                          />
+                          <input
+                            type="text"
+                            value={widget?.brand_color || "#f43f5e"}
+                            onChange={(e) => setWidget({ ...widget, brand_color: e.target.value })}
+                            className="flex-1 h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm font-mono dark:text-white outline-none focus:ring-2 focus:ring-rose-500/20"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Welcome Message */}
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Welcome Message</label>
+                        <textarea
+                          value={widget?.greeting || ""}
+                          onChange={(e) => setWidget({ ...widget, greeting: e.target.value })}
+                          placeholder="e.g. Hi! How can we help you today?"
+                          className="w-full h-24 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm dark:text-white resize-none outline-none focus:ring-2 focus:ring-rose-500/20"
+                        />
+                      </div>
+
+                      {/* Launcher Icon */}
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Launcher Icon</label>
+                        <div className="grid grid-cols-5 gap-2">
+                          {LAUNCHER_ICONS.map(({ id, label, Icon }) => (
+                            <button
+                              key={id}
+                              onClick={() => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), launcher_icon: id } })}
+                              className={cn(
+                                "flex flex-col items-center gap-1.5 py-3 rounded-xl border transition-all cursor-pointer",
+                                getWidgetTheme(widget).launcher_icon === id
+                                  ? "border-rose-500 bg-rose-50 dark:bg-rose-500/10"
+                                  : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20"
+                              )}
+                            >
+                              <div
+                                className="w-9 h-9 rounded-full flex items-center justify-center"
+                                style={{ background: getWidgetTheme(widget).launcher_icon === id ? brandColor : "#e2e8f0" }}
+                              >
+                                <Icon className={cn("w-4 h-4", getWidgetTheme(widget).launcher_icon === id ? "text-white" : "text-slate-500")} />
+                              </div>
+                              <span className={cn("text-[9px] font-bold uppercase tracking-wider", getWidgetTheme(widget).launcher_icon === id ? "text-rose-500" : "text-slate-400")}>{label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Widget Position */}
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Widget Position</label>
+                        <div className="flex gap-3">
+                          {(["bottom_right", "bottom_left"] as const).map((pos) => (
+                            <button
+                              key={pos}
+                              onClick={() => setWidget({ ...widget, position: pos })}
+                              className={cn(
+                                "flex-1 py-3 rounded-xl text-sm font-bold border transition-all cursor-pointer",
+                                widget?.position === pos
+                                  ? "border-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-500"
+                                  : "border-slate-200 dark:border-white/10 text-slate-500 hover:border-slate-300 dark:hover:border-white/20"
+                              )}
+                            >
+                              {pos === "bottom_right" ? "Bottom Right" : "Bottom Left"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Chat Panel Height */}
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Chat Panel Height</label>
+                          <span className="text-sm font-bold text-rose-500">{getWidgetTheme(widget).chat_height}px</span>
+                        </div>
+                        <input
+                          type="range" min="350" max="700" step="10"
+                          value={getWidgetTheme(widget).chat_height}
+                          onChange={(e) => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), chat_height: Number(e.target.value) } })}
+                          className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                        />
+                        <div className="flex justify-between">
+                          <span className="text-[10px] text-slate-400">Compact (350px)</span>
+                          <span className="text-[10px] text-slate-400">Tall (700px)</span>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/3 border border-slate-100 dark:border-white/5 flex items-start gap-3">
+                        <Palette className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                        <p className="text-xs text-slate-500 leading-relaxed">Changes are reflected in the widget preview on the right in real time. Click <strong>Save Widget</strong> to persist.</p>
+                      </div>
+
+                      <button
+                        onClick={handleWidgetSave}
+                        disabled={widgetSaveLoading}
+                        className="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {widgetSaveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        Save Widget
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ─── Deploy Tab ─── */}
+              {activeTab === "Deploy" && (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Deploy Your Agent</h3>
+                    <p className="text-sm text-slate-500">Publish your agent and embed it on your website.</p>
+                  </div>
+
+                  {/* Readiness Checklist */}
+                  <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Deployment Checklist</h4>
+                    <div className="space-y-3">
+                      {[
+                        { label: "Configure your agent (Basic Info)", done: !!currentAgent?.name?.trim() },
+                        { label: "Upload documents (Knowledge page)", done: hasKBs },
+                        { label: "Publish your agent", done: isPublished },
+                        { label: "Create an API key", done: hasApiKey },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-center gap-3">
+                          {item.done ? (
+                            <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                          ) : (
+                            <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600 shrink-0" />
+                          )}
+                          <span className={cn("text-sm", item.done ? "text-slate-900 dark:text-white" : "text-slate-400")}>{item.label}</span>
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                {/* Embed Script */}
-                <div className="bg-slate-900 dark:bg-white/5 border border-white/10 shadow-xl rounded-2xl p-6 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 blur-[100px] rounded-full" />
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-rose-500/20 rounded-xl flex items-center justify-center text-rose-500">
-                        <Code className="w-5 h-5" />
+                  {/* Publish */}
+                  <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">Agent Status</h4>
+                        <p className="text-xs text-slate-400 mt-0.5">{isPublished ? "Your agent is live and ready to serve users." : "Publish your agent to make it accessible via the widget."}</p>
                       </div>
-                      <h4 className="text-lg font-bold text-white font-cabinet">Embed Script</h4>
-                    </div>
-                    <p className="text-slate-400 text-sm mb-4">
-                      Copy this script into the <code className="text-rose-300">&lt;head&gt;</code> or before <code className="text-rose-300">&lt;/body&gt;</code> of your website.
-                    </p>
-                    <div className="bg-black/40 border border-white/5 rounded-xl p-5 relative group">
-                      <pre className="text-xs text-rose-300 font-mono overflow-x-auto whitespace-pre-wrap">{embedSnippet}</pre>
                       <button
-                        onClick={() => copyToClipboard(embedSnippet)}
-                        className="absolute top-3 right-3 p-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        onClick={handlePublish}
+                        disabled={publishLoading || isPublished}
+                        className={cn(
+                          "flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all",
+                          isPublished
+                            ? "bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 cursor-default"
+                            : "bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20"
+                        )}
                       >
-                        <Copy className="w-4 h-4" />
+                        {publishLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
+                        {isPublished ? "Published" : "Publish Agent"}
                       </button>
                     </div>
-                    {!hasApiKey ? (
-                      <p className="text-xs text-amber-400 mt-3">Create an API key above to get a working embed snippet.</p>
+                  </div>
+
+                  {/* API Keys */}
+                  <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">API Keys</h4>
+                        <p className="text-xs text-slate-400 mt-0.5">Used to authenticate the widget on your website.</p>
+                      </div>
+                      <button
+                        onClick={() => setShowKeyModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl text-sm font-bold text-slate-700 dark:text-white transition-all"
+                      >
+                        <Plus className="w-4 h-4" /> Create Key
+                      </button>
+                    </div>
+                    {apiKeysLoading ? (
+                      <div className="py-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
+                    ) : apiKeys.length === 0 ? (
+                      <div className="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-white/10 rounded-xl">
+                        No API keys yet. Create one to use the embed script.
+                      </div>
                     ) : (
-                      <p className="text-xs text-green-400 mt-3">Replace <code className="text-rose-300">YOUR_API_KEY</code> with the full key from the Generate Key modal (starts with <code className="text-rose-300">bc_live_</code>).</p>
+                      <div className="space-y-2">
+                        {apiKeys.map((key: any) => (
+                          <div key={key.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Key className="w-4 h-4 text-slate-400" />
+                              <span className="text-sm font-bold text-slate-900 dark:text-white">{key.name}</span>
+                            </div>
+                            <span className="text-xs text-slate-400 font-mono">{key.prefix}........</span>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                </div>
-              </div>
-            )}
 
-            {/* ─── Save & Next / Save footer ─── */}
-            <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5 gap-4">
-              {validationIssue ? (
-                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5 shrink-0" /> {validationIssue}
-                </p>
-              ) : <span />}
-              <div className="flex gap-3 shrink-0">
-                {!isLastTab ? (
-                  <button
-                    onClick={() => handleSave(true)}
-                    disabled={!canSave}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-rose-500 text-white rounded-xl font-bold text-sm shadow-xl shadow-rose-200 dark:shadow-rose-500/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {saveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>{isDraft ? "Create & Next" : "Save & Next"} <ArrowRight className="w-4 h-4" /></>}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleSave(false)}
-                    disabled={!canSave}
-                    className="px-6 py-2.5 bg-rose-500 text-white rounded-xl font-bold text-sm shadow-xl shadow-rose-200 dark:shadow-rose-500/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {saveLoading ? "Saving..." : "Save"}
-                  </button>
-                )}
+                  {/* Embed Script */}
+                  <div className="bg-slate-900 dark:bg-white/5 border border-white/10 shadow-xl rounded-2xl p-6 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 blur-[100px] rounded-full" />
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-rose-500/20 rounded-xl flex items-center justify-center text-rose-500">
+                          <Code className="w-5 h-5" />
+                        </div>
+                        <h4 className="text-lg font-bold text-white font-cabinet">Embed Script</h4>
+                      </div>
+                      <p className="text-slate-400 text-sm mb-4">
+                        Copy this script into the <code className="text-rose-300">&lt;head&gt;</code> or before <code className="text-rose-300">&lt;/body&gt;</code> of your website.
+                      </p>
+                      <div className="bg-black/40 border border-white/5 rounded-xl p-5 relative group">
+                        <pre className="text-xs text-rose-300 font-mono overflow-x-auto whitespace-pre-wrap">{embedSnippet}</pre>
+                        <button
+                          onClick={() => copyToClipboard(embedSnippet)}
+                          className="absolute top-3 right-3 p-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {!hasApiKey ? (
+                        <p className="text-xs text-amber-400 mt-3">Create an API key above to get a working embed snippet.</p>
+                      ) : (
+                        <p className="text-xs text-green-400 mt-3">Replace <code className="text-rose-300">YOUR_API_KEY</code> with the full key from the Generate Key modal (starts with <code className="text-rose-300">bc_live_</code>).</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ─── Save & Next / Save footer ─── */}
+              <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5 gap-4">
+                {validationIssue ? (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5 shrink-0" /> {validationIssue}
+                  </p>
+                ) : <span />}
+                <div className="flex gap-3 shrink-0">
+                  {!isLastTab ? (
+                    <button
+                      onClick={() => handleSave(true)}
+                      disabled={!canSave}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-rose-500 text-white rounded-xl font-bold text-sm shadow-xl shadow-rose-200 dark:shadow-rose-500/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {saveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>{isDraft ? "Create & Next" : "Save & Next"} <ArrowRight className="w-4 h-4" /></>}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleSave(false)}
+                      disabled={!canSave}
+                      className="px-6 py-2.5 bg-rose-500 text-white rounded-xl font-bold text-sm shadow-xl shadow-rose-200 dark:shadow-rose-500/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {saveLoading ? "Saving..." : "Save"}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Floating Preview Button -- visible only below xl */}
-        <div className="xl:hidden absolute bottom-6 right-6 z-50">
-          <button
-            onClick={() => setShowPreview(true)}
-            className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-slate-900 dark:bg-slate-800 dark:border dark:border-slate-700 text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group relative cursor-pointer"
-          >
-            <Eye className="w-5 h-5 lg:w-6 lg:h-6" />
-            <div className="absolute top-1/2 -translate-y-1/2 right-14 lg:right-16 px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-[10px] font-bold uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              Preview Bot
-            </div>
-          </button>
-        </div>
+          {/* Floating Preview Button -- visible only below xl */}
+          <div className="xl:hidden absolute bottom-6 right-6 z-50">
+            <button
+              onClick={() => setShowPreview(true)}
+              className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-slate-900 dark:bg-slate-800 dark:border dark:border-slate-700 text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group relative cursor-pointer"
+            >
+              <Eye className="w-5 h-5 lg:w-6 lg:h-6" />
+              <div className="absolute top-1/2 -translate-y-1/2 right-14 lg:right-16 px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-[10px] font-bold uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                Preview Bot
+              </div>
+            </button>
+          </div>
         </div>{/* close left tab-content column */}
 
         {/* ── Right: Website-style Widget Preview (xl+ only) ── */}
@@ -1012,131 +1077,131 @@ export default function BotManagerPage() {
               </div>
             </div>
           ) : (
-          <div className="flex-1 relative overflow-hidden">
-            {/* Fake website background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-[#111827] dark:to-[#0f172a]">
-              {/* Fake browser chrome */}
-              <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-1.5 flex items-center gap-2">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-red-400" />
-                  <div className="w-2 h-2 rounded-full bg-yellow-400" />
-                  <div className="w-2 h-2 rounded-full bg-green-400" />
+            <div className="flex-1 relative overflow-hidden">
+              {/* Fake website background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-[#111827] dark:to-[#0f172a]">
+                {/* Fake browser chrome */}
+                <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-1.5 flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 rounded-full bg-red-400" />
+                    <div className="w-2 h-2 rounded-full bg-yellow-400" />
+                    <div className="w-2 h-2 rounded-full bg-green-400" />
+                  </div>
+                  <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-700 rounded text-[8px] text-slate-400 flex items-center px-2 font-mono">yourwebsite.com</div>
                 </div>
-                <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-700 rounded text-[8px] text-slate-400 flex items-center px-2 font-mono">yourwebsite.com</div>
+                {/* Fake page content lines */}
+                <div className="p-4 space-y-3 opacity-40">
+                  <div className="h-6 w-2/3 bg-slate-300 dark:bg-slate-600 rounded" />
+                  <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded" />
+                  <div className="h-3 w-5/6 bg-slate-200 dark:bg-slate-700 rounded" />
+                  <div className="h-3 w-4/6 bg-slate-200 dark:bg-slate-700 rounded" />
+                  <div className="h-20 w-full bg-slate-200 dark:bg-slate-700 rounded mt-4" />
+                  <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded" />
+                  <div className="h-3 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
+                </div>
               </div>
-              {/* Fake page content lines */}
-              <div className="p-4 space-y-3 opacity-40">
-                <div className="h-6 w-2/3 bg-slate-300 dark:bg-slate-600 rounded" />
-                <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded" />
-                <div className="h-3 w-5/6 bg-slate-200 dark:bg-slate-700 rounded" />
-                <div className="h-3 w-4/6 bg-slate-200 dark:bg-slate-700 rounded" />
-                <div className="h-20 w-full bg-slate-200 dark:bg-slate-700 rounded mt-4" />
-                <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded" />
-                <div className="h-3 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
-              </div>
-            </div>
 
-            {/* Widget chat panel (positioned like real widget) */}
-            <div className={cn(
-              "absolute bottom-14 w-[250px] 2xl:w-[320px] flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1425] z-10",
-              widget?.position === "bottom_left" ? "left-3" : "right-3"
-            )} style={{ height: `min(${getWidgetTheme(widget).chat_height}px, calc(100% - 80px))` }}>
-              {/* Widget header */}
-              <div className="px-3 py-2.5 flex items-center gap-2 shrink-0" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
-                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-                  <Bot className="w-3.5 h-3.5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-white text-xs truncate">{currentAgent?.name || "Assistant"}</p>
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                    <p className="text-[7px] text-white/70 font-medium uppercase tracking-widest">Online</p>
+              {/* Widget chat panel (positioned like real widget) */}
+              <div className={cn(
+                "absolute bottom-14 w-[250px] 2xl:w-[320px] flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1425] z-10",
+                widget?.position === "bottom_left" ? "left-3" : "right-3"
+              )} style={{ height: `min(${getWidgetTheme(widget).chat_height}px, calc(100% - 80px))` }}>
+                {/* Widget header */}
+                <div className="px-3 py-2.5 flex items-center gap-2 shrink-0" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
+                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                    <Bot className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-white text-xs truncate">{currentAgent?.name || "Assistant"}</p>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                      <p className="text-[7px] text-white/70 font-medium uppercase tracking-widest">Online</p>
+                    </div>
+                  </div>
+                  <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                    <X className="w-3 h-3 text-white" />
                   </div>
                 </div>
-                <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
-                  <X className="w-3 h-3 text-white" />
-                </div>
-              </div>
 
-              {/* Messages area */}
-              <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 min-h-0 scrollbar-hide">
-                {previewMessages.map((msg, i) => (
-                  <div key={i} className={cn("flex gap-1.5", msg.from === "user" && "flex-row-reverse")}>
-                    {msg.from === "bot" ? (
-                      <div className="w-5 h-5 rounded-full shrink-0 mt-0.5 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
+                {/* Messages area */}
+                <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 min-h-0 scrollbar-hide">
+                  {previewMessages.map((msg, i) => (
+                    <div key={i} className={cn("flex gap-1.5", msg.from === "user" && "flex-row-reverse")}>
+                      {msg.from === "bot" ? (
+                        <div className="w-5 h-5 rounded-full shrink-0 mt-0.5 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
+                          <Bot className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0 mt-0.5 flex items-center justify-center text-[7px] font-bold text-slate-500 dark:text-slate-300">U</div>
+                      )}
+                      <div
+                        className={cn(
+                          "max-w-[82%] px-2.5 py-1.5 text-[11px] leading-relaxed",
+                          msg.from === "bot"
+                            ? "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 rounded-xl rounded-tl-none border border-slate-100 dark:border-white/10"
+                            : "text-white rounded-xl rounded-tr-none"
+                        )}
+                        style={msg.from === "user" ? { background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` } : undefined}
+                      >
+                        {msg.text}
+                      </div>
+                    </div>
+                  ))}
+                  {isTyping && (
+                    <div className="flex gap-1.5">
+                      <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
                         <Bot className="w-2.5 h-2.5 text-white" />
                       </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0 mt-0.5 flex items-center justify-center text-[7px] font-bold text-slate-500 dark:text-slate-300">U</div>
-                    )}
-                    <div
-                      className={cn(
-                        "max-w-[82%] px-2.5 py-1.5 text-[11px] leading-relaxed",
-                        msg.from === "bot"
-                          ? "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 rounded-xl rounded-tl-none border border-slate-100 dark:border-white/10"
-                          : "text-white rounded-xl rounded-tr-none"
-                      )}
-                      style={msg.from === "user" ? { background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` } : undefined}
-                    >
-                      {msg.text}
+                      <div className="bg-slate-100 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl rounded-tl-none px-2.5 py-1.5 flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {isTyping && (
-                  <div className="flex gap-1.5">
-                    <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
-                      <Bot className="w-2.5 h-2.5 text-white" />
-                    </div>
-                    <div className="bg-slate-100 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl rounded-tl-none px-2.5 py-1.5 flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </div>
-                  </div>
-                )}
-                <div ref={chatEndRef} />
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+
+                {/* Input */}
+                <div className="border-t border-slate-100 dark:border-white/5 p-2 flex items-center gap-1.5 shrink-0">
+                  <input
+                    type="text"
+                    value={previewInput}
+                    onChange={(e) => setPreviewInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handlePreviewSend()}
+                    disabled={isDraft}
+                    placeholder={isDraft ? "Create agent first..." : "Type a message..."}
+                    className="flex-1 h-7 px-2.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-[11px] outline-none placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <button
+                    onClick={handlePreviewSend}
+                    disabled={isDraft}
+                    className="w-7 h-7 shrink-0 rounded-lg text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}
+                  >
+                    <Send className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* Powered by */}
+                <div className="border-t border-slate-100 dark:border-white/5 py-1 flex justify-center shrink-0 bg-slate-50 dark:bg-white/[0.02]">
+                  <p className="text-[8px] text-slate-400 dark:text-slate-500">Powered by <span className="font-bold">BolChat</span></p>
+                </div>
               </div>
 
-              {/* Input */}
-              <div className="border-t border-slate-100 dark:border-white/5 p-2 flex items-center gap-1.5 shrink-0">
-                <input
-                  type="text"
-                  value={previewInput}
-                  onChange={(e) => setPreviewInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handlePreviewSend()}
-                  disabled={isDraft}
-                  placeholder={isDraft ? "Create agent first..." : "Type a message..."}
-                  className="flex-1 h-7 px-2.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-[11px] outline-none placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <button
-                  onClick={handlePreviewSend}
-                  disabled={isDraft}
-                  className="w-7 h-7 shrink-0 rounded-lg text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              {/* Launcher button (positioned like real widget) */}
+              <div className={cn(
+                "absolute bottom-3 z-10",
+                widget?.position === "bottom_left" ? "left-3" : "right-3"
+              )}>
+                <div
+                  className="w-11 h-11 rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
                   style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}
                 >
-                  <Send className="w-3 h-3" />
-                </button>
-              </div>
-
-              {/* Powered by */}
-              <div className="border-t border-slate-100 dark:border-white/5 py-1 flex justify-center shrink-0 bg-slate-50 dark:bg-white/[0.02]">
-                <p className="text-[8px] text-slate-400 dark:text-slate-500">Powered by <span className="font-bold">BolChat</span></p>
+                  <LauncherIcon iconId={getWidgetTheme(widget).launcher_icon} className="w-5 h-5 text-white" />
+                </div>
               </div>
             </div>
-
-            {/* Launcher button (positioned like real widget) */}
-            <div className={cn(
-              "absolute bottom-3 z-10",
-              widget?.position === "bottom_left" ? "left-3" : "right-3"
-            )}>
-              <div
-                className="w-11 h-11 rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-                style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}
-              >
-                <LauncherIcon iconId={getWidgetTheme(widget).launcher_icon} className="w-5 h-5 text-white" />
-              </div>
-            </div>
-          </div>
           )}
         </div>
 
