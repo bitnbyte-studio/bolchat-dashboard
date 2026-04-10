@@ -6,7 +6,7 @@ import {
   ChevronDown, Info, Palette, Code, Eye, ChevronRight,
   X, Send, Loader2, Save, Database,
   Rocket, Copy, Key, CheckCircle2, Circle,
-  RotateCcw, ArrowRight
+  RotateCcw, ArrowRight, MessageCircle, Headphones, HelpCircle, Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -34,8 +34,30 @@ const DEFAULT_SETTINGS: AgentSettings = {
   language: "en",
 };
 
-const TABS = ["Basic Info", "Knowledge", "Branding", "Deploy"] as const;
+const TABS = ["Basic Info", "Knowledge", "Widget", "Deploy"] as const;
 type Tab = (typeof TABS)[number];
+
+const LAUNCHER_ICONS = [
+  { id: "chat", label: "Chat Bubble", Icon: MessageCircle },
+  { id: "bot", label: "Bot", Icon: Bot },
+  { id: "headphones", label: "Support", Icon: Headphones },
+  { id: "help", label: "Help", Icon: HelpCircle },
+  { id: "zap", label: "Zap", Icon: Zap },
+] as const;
+
+function getWidgetTheme(widget: any) {
+  return {
+    launcher_icon: "chat",
+    chat_height: 520,
+    ...(widget?.theme || {}),
+  };
+}
+
+function LauncherIcon({ iconId, className }: { iconId: string; className?: string }) {
+  const match = LAUNCHER_ICONS.find((i) => i.id === iconId);
+  const Ic = match?.Icon || MessageCircle;
+  return <Ic className={className} />;
+}
 
 export default function BotManagerPage() {
   const { toast } = useToast();
@@ -94,7 +116,16 @@ export default function BotManagerPage() {
     if (result.success && result.data?.length > 0) {
       setAgents(result.data);
       setCurrentAgent(result.data[0]);
+    } else if (result.success) {
+      setAgents([]);
+      setCurrentAgent({
+        name: "",
+        description: "",
+        system_prompt: "",
+        settings: { ...DEFAULT_SETTINGS },
+      });
     } else {
+      toast(result.error || "Failed to load agents", "error");
       setAgents([]);
       setCurrentAgent({
         name: "",
@@ -217,11 +248,12 @@ export default function BotManagerPage() {
       brand_color: widget.brand_color,
       greeting: widget.greeting,
       position: widget.position,
+      theme: widget.theme || {},
     });
     if (res.success) {
-      toast("Branding saved", "success");
+      toast("Widget saved", "success");
     } else {
-      toast("Failed to save branding", "error");
+      toast(res.error || "Failed to save widget", "error");
     }
     setWidgetSaveLoading(false);
   }
@@ -254,7 +286,7 @@ export default function BotManagerPage() {
       setNewKeyName("");
       fetchApiKeys();
     } else {
-      toast("Failed to create key", "error");
+      toast(res.error || "Failed to create key", "error");
     }
     setKeyCreateLoading(false);
   }
@@ -308,7 +340,7 @@ export default function BotManagerPage() {
 
   const embedSnippet = `<script
   src="https://cdn.bolchat.ai/v1/widget.js"
-  data-key="${hasApiKey ? apiKeys[0].prefix + "..." : "YOUR_API_KEY"}"
+  data-key="YOUR_API_KEY"
   data-agent="${currentAgent?.id || "YOUR_AGENT_ID"}"
   async
 ></script>`;
@@ -670,18 +702,19 @@ export default function BotManagerPage() {
               </div>
             )}
 
-            {/* ─── Branding Tab ─── */}
-            {activeTab === "Branding" && (
+            {/* ─── Widget Tab ─── */}
+            {activeTab === "Widget" && (
               <div className="space-y-8">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Widget Branding</h3>
-                  <p className="text-sm text-slate-500">Customize how your chat widget looks on your website.</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Widget Customization</h3>
+                  <p className="text-sm text-slate-500">Design how your chat widget looks and behaves on your website.</p>
                 </div>
 
                 {widgetLoading ? (
                   <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
                 ) : (
                   <div className="space-y-6">
+                    {/* Brand Color */}
                     <div className="space-y-2">
                       <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Brand Color</label>
                       <div className="flex gap-4 items-center">
@@ -700,16 +733,45 @@ export default function BotManagerPage() {
                       </div>
                     </div>
 
+                    {/* Welcome Message */}
                     <div className="space-y-2">
                       <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Welcome Message</label>
                       <textarea
                         value={widget?.greeting || ""}
                         onChange={(e) => setWidget({ ...widget, greeting: e.target.value })}
                         placeholder="e.g. Hi! How can we help you today?"
-                        className="w-full h-28 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm dark:text-white resize-none outline-none focus:ring-2 focus:ring-rose-500/20"
+                        className="w-full h-24 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm dark:text-white resize-none outline-none focus:ring-2 focus:ring-rose-500/20"
                       />
                     </div>
 
+                    {/* Launcher Icon */}
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Launcher Icon</label>
+                      <div className="grid grid-cols-5 gap-2">
+                        {LAUNCHER_ICONS.map(({ id, label, Icon }) => (
+                          <button
+                            key={id}
+                            onClick={() => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), launcher_icon: id } })}
+                            className={cn(
+                              "flex flex-col items-center gap-1.5 py-3 rounded-xl border transition-all cursor-pointer",
+                              getWidgetTheme(widget).launcher_icon === id
+                                ? "border-rose-500 bg-rose-50 dark:bg-rose-500/10"
+                                : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20"
+                            )}
+                          >
+                            <div
+                              className="w-9 h-9 rounded-full flex items-center justify-center"
+                              style={{ background: getWidgetTheme(widget).launcher_icon === id ? brandColor : "#e2e8f0" }}
+                            >
+                              <Icon className={cn("w-4 h-4", getWidgetTheme(widget).launcher_icon === id ? "text-white" : "text-slate-500")} />
+                            </div>
+                            <span className={cn("text-[9px] font-bold uppercase tracking-wider", getWidgetTheme(widget).launcher_icon === id ? "text-rose-500" : "text-slate-400")}>{label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Widget Position */}
                     <div className="space-y-2">
                       <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Widget Position</label>
                       <div className="flex gap-3">
@@ -730,9 +792,27 @@ export default function BotManagerPage() {
                       </div>
                     </div>
 
+                    {/* Chat Panel Height */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Chat Panel Height</label>
+                        <span className="text-sm font-bold text-rose-500">{getWidgetTheme(widget).chat_height}px</span>
+                      </div>
+                      <input
+                        type="range" min="350" max="700" step="10"
+                        value={getWidgetTheme(widget).chat_height}
+                        onChange={(e) => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), chat_height: Number(e.target.value) } })}
+                        className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                      />
+                      <div className="flex justify-between">
+                        <span className="text-[10px] text-slate-400">Compact (350px)</span>
+                        <span className="text-[10px] text-slate-400">Tall (700px)</span>
+                      </div>
+                    </div>
+
                     <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/3 border border-slate-100 dark:border-white/5 flex items-start gap-3">
                       <Palette className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                      <p className="text-xs text-slate-500 leading-relaxed">Changes are reflected in the phone preview on the right in real time. Click <strong>Save Branding</strong> to persist.</p>
+                      <p className="text-xs text-slate-500 leading-relaxed">Changes are reflected in the widget preview on the right in real time. Click <strong>Save Widget</strong> to persist.</p>
                     </div>
 
                     <button
@@ -741,7 +821,7 @@ export default function BotManagerPage() {
                       className="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {widgetSaveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      Save Branding
+                      Save Widget
                     </button>
                   </div>
                 )}
@@ -761,9 +841,10 @@ export default function BotManagerPage() {
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white">Deployment Checklist</h4>
                   <div className="space-y-3">
                     {[
-                      { label: "Create an API key", done: hasApiKey },
-                      { label: "Link at least one knowledge base", done: hasKBs },
+                      { label: "Configure your agent (Basic Info)", done: !!currentAgent?.name?.trim() },
+                      { label: "Upload documents (Knowledge page)", done: hasKBs },
                       { label: "Publish your agent", done: isPublished },
+                      { label: "Create an API key", done: hasApiKey },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-3">
                         {item.done ? (
@@ -857,8 +938,10 @@ export default function BotManagerPage() {
                         <Copy className="w-4 h-4" />
                       </button>
                     </div>
-                    {!hasApiKey && (
+                    {!hasApiKey ? (
                       <p className="text-xs text-amber-400 mt-3">Create an API key above to get a working embed snippet.</p>
+                    ) : (
+                      <p className="text-xs text-green-400 mt-3">Replace <code className="text-rose-300">YOUR_API_KEY</code> with the full key from the Generate Key modal (starts with <code className="text-rose-300">bc_live_</code>).</p>
                     )}
                   </div>
                 </div>
@@ -909,127 +992,151 @@ export default function BotManagerPage() {
         </div>
         </div>{/* close left tab-content column */}
 
-        {/* ── Right: Inline Phone Preview (xl+ only) ── */}
-        <div className="hidden xl:flex w-[260px] 2xl:w-[380px] shrink-0 border-l border-slate-200 dark:border-white/5 flex-col items-center justify-center bg-slate-50/50 dark:bg-[#0a0f1e]/50 p-2 2xl:p-6 gap-2 2xl:gap-4">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Live Preview</p>
+        {/* ── Right: Website-style Widget Preview (xl+ only) ── */}
+        <div className="hidden xl:flex w-[300px] 2xl:w-[420px] shrink-0 border-l border-slate-200 dark:border-white/5 flex-col bg-slate-50/50 dark:bg-[#0a0f1e]/50 overflow-hidden">
+          <div className="px-3 py-2 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Widget Preview</p>
+            <button onClick={() => resetPreview()} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1 transition-colors" title="Reset chat">
+              <RotateCcw className="w-3 h-3" /> Reset
+            </button>
+          </div>
 
           {!currentAgent?.id ? (
-            <div className="w-[220px] 2xl:w-[280px] flex flex-col items-center justify-center text-center gap-3 py-10">
+            <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 p-6">
               <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                 <Bot className="w-8 h-8 text-slate-300 dark:text-slate-600" />
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-400 dark:text-slate-500">{isDraft ? "Save Your Agent First" : "No Agent Selected"}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">{isDraft ? "Fill in the details and click Create & Next to start chatting with your agent." : "Select an agent to preview it here."}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">{isDraft ? "Fill in the details and click Create & Next to start chatting." : "Select an agent to preview."}</p>
               </div>
             </div>
           ) : (
-          <>
-          {/* Phone Frame */}
-          <div className="relative w-[220px] 2xl:w-[290px]">
-            {/* Device shell */}
-            <div className="bg-[#1a1a2e] rounded-[1.8rem] 2xl:rounded-[2.6rem] p-1.5 2xl:p-[9px] shadow-[0_12px_40px_rgba(0,0,0,0.25)] 2xl:shadow-[0_20px_60px_rgba(0,0,0,0.35)] ring-1 ring-white/10">
-              {/* Screen */}
-              <div className="bg-white dark:bg-[#0d1425] rounded-[1.4rem] 2xl:rounded-[2rem] overflow-hidden flex flex-col h-[390px] 2xl:h-[530px]">
-                {/* Status bar */}
-                <div className="flex items-center justify-between px-4 2xl:px-6 pt-1.5 2xl:pt-2.5 pb-0.5 text-[8px] 2xl:text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                  <span>9:41</span>
-                  <div className="w-[55px] h-[16px] 2xl:w-[85px] 2xl:h-[26px] bg-black rounded-full mx-auto" />
-                  <div className="flex items-center gap-0.5 2xl:gap-1">
-                    <div className="flex gap-[1.5px] 2xl:gap-[2px]">{[1,2,3,4].map(i => <div key={i} className="w-[2px] 2xl:w-[3px] rounded-sm bg-slate-400 dark:bg-slate-500" style={{ height: 2 + i * 1.2 }} />)}</div>
-                    <div className="w-3.5 2xl:w-5 h-1.5 2xl:h-[10px] rounded-[1.5px] 2xl:rounded-[2px] border border-slate-400 dark:border-slate-500 relative ml-0.5 2xl:ml-1">
-                      <div className="absolute inset-px bg-slate-400 dark:bg-slate-500 rounded-[1px]" style={{ width: "60%" }} />
-                    </div>
+          <div className="flex-1 relative overflow-hidden">
+            {/* Fake website background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-[#111827] dark:to-[#0f172a]">
+              {/* Fake browser chrome */}
+              <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-1.5 flex items-center gap-2">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <div className="w-2 h-2 rounded-full bg-yellow-400" />
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                </div>
+                <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-700 rounded text-[8px] text-slate-400 flex items-center px-2 font-mono">yourwebsite.com</div>
+              </div>
+              {/* Fake page content lines */}
+              <div className="p-4 space-y-3 opacity-40">
+                <div className="h-6 w-2/3 bg-slate-300 dark:bg-slate-600 rounded" />
+                <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-3 w-5/6 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-3 w-4/6 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-20 w-full bg-slate-200 dark:bg-slate-700 rounded mt-4" />
+                <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-3 w-3/4 bg-slate-200 dark:bg-slate-700 rounded" />
+              </div>
+            </div>
+
+            {/* Widget chat panel (positioned like real widget) */}
+            <div className={cn(
+              "absolute bottom-14 w-[250px] 2xl:w-[320px] flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1425] z-10",
+              widget?.position === "bottom_left" ? "left-3" : "right-3"
+            )} style={{ height: `min(${getWidgetTheme(widget).chat_height}px, calc(100% - 80px))` }}>
+              {/* Widget header */}
+              <div className="px-3 py-2.5 flex items-center gap-2 shrink-0" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
+                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                  <Bot className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-white text-xs truncate">{currentAgent?.name || "Assistant"}</p>
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    <p className="text-[7px] text-white/70 font-medium uppercase tracking-widest">Online</p>
                   </div>
                 </div>
-
-                {/* Chat Header */}
-                <div className="px-2.5 2xl:px-4 py-1.5 2xl:py-3 flex items-center gap-1.5 2xl:gap-3 shrink-0" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
-                  <div className="w-6 h-6 2xl:w-8 2xl:h-8 rounded-full bg-white/20 flex items-center justify-center">
-                    <Bot className="w-3 h-3 2xl:w-4 2xl:h-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-white text-[10px] 2xl:text-xs truncate">{currentAgent?.name || "Assistant"}</p>
-                    <div className="flex items-center gap-0.5 2xl:gap-1">
-                      <div className="w-1 h-1 2xl:w-1.5 2xl:h-1.5 rounded-full bg-green-400 animate-pulse" />
-                      <p className="text-[6px] 2xl:text-[8px] text-white/70 font-medium uppercase tracking-widest">Online</p>
-                    </div>
-                  </div>
-                  <button onClick={() => resetPreview()} className="w-5 h-5 2xl:w-6 2xl:h-6 rounded-md 2xl:rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors" title="Clear">
-                    <RotateCcw className="w-2.5 h-2.5 2xl:w-3 2xl:h-3 text-white" />
-                  </button>
+                <div className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                  <X className="w-3 h-3 text-white" />
                 </div>
+              </div>
 
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-1.5 2xl:p-3 space-y-1.5 2xl:space-y-3 scrollbar-hide">
-                  {previewMessages.map((msg, i) => (
-                    <div key={i} className={cn("flex gap-1.5 2xl:gap-2", msg.from === "user" && "flex-row-reverse")}>
-                      {msg.from === "bot" ? (
-                        <div className="w-5 h-5 2xl:w-6 2xl:h-6 rounded-full shrink-0 mt-0.5 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
-                          <Bot className="w-2.5 h-2.5 2xl:w-3 2xl:h-3 text-white" />
-                        </div>
-                      ) : (
-                        <div className="w-5 h-5 2xl:w-6 2xl:h-6 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0 mt-0.5 flex items-center justify-center text-[7px] 2xl:text-[8px] font-bold text-slate-500 dark:text-slate-300">U</div>
+              {/* Messages area */}
+              <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 min-h-0 scrollbar-hide">
+                {previewMessages.map((msg, i) => (
+                  <div key={i} className={cn("flex gap-1.5", msg.from === "user" && "flex-row-reverse")}>
+                    {msg.from === "bot" ? (
+                      <div className="w-5 h-5 rounded-full shrink-0 mt-0.5 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
+                        <Bot className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0 mt-0.5 flex items-center justify-center text-[7px] font-bold text-slate-500 dark:text-slate-300">U</div>
+                    )}
+                    <div
+                      className={cn(
+                        "max-w-[82%] px-2.5 py-1.5 text-[11px] leading-relaxed",
+                        msg.from === "bot"
+                          ? "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 rounded-xl rounded-tl-none border border-slate-100 dark:border-white/10"
+                          : "text-white rounded-xl rounded-tr-none"
                       )}
-                      <div
-                        className={cn(
-                          "max-w-[82%] px-2 2xl:px-3 py-1.5 2xl:py-2 text-[10px] 2xl:text-[12px] leading-relaxed",
-                          msg.from === "bot"
-                            ? "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 rounded-lg 2xl:rounded-xl rounded-tl-none border border-slate-100 dark:border-white/10"
-                            : "text-white rounded-lg 2xl:rounded-xl rounded-tr-none"
-                        )}
-                        style={msg.from === "user" ? { background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` } : undefined}
-                      >
-                        {msg.text}
-                      </div>
+                      style={msg.from === "user" ? { background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` } : undefined}
+                    >
+                      {msg.text}
                     </div>
-                  ))}
-                  {isTyping && (
-                    <div className="flex gap-1.5 2xl:gap-2">
-                      <div className="w-5 h-5 2xl:w-6 2xl:h-6 rounded-full shrink-0 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
-                        <Bot className="w-2.5 h-2.5 2xl:w-3 2xl:h-3 text-white" />
-                      </div>
-                      <div className="bg-slate-100 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg 2xl:rounded-xl rounded-tl-none px-2 2xl:px-3 py-1.5 2xl:py-2 flex items-center gap-1">
-                        <span className="w-1 h-1 2xl:w-1.5 2xl:h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="w-1 h-1 2xl:w-1.5 2xl:h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="w-1 h-1 2xl:w-1.5 2xl:h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-                      </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex gap-1.5">
+                    <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
+                      <Bot className="w-2.5 h-2.5 text-white" />
                     </div>
-                  )}
-                  <div ref={chatEndRef} />
-                </div>
+                    <div className="bg-slate-100 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl rounded-tl-none px-2.5 py-1.5 flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-1 h-1 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
 
-                {/* Input */}
-                <div className="border-t border-slate-100 dark:border-white/5 p-1 2xl:p-2 flex items-center gap-1 2xl:gap-2 shrink-0">
-                  <input
-                    type="text"
-                    value={previewInput}
-                    onChange={(e) => setPreviewInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handlePreviewSend()}
-                    disabled={isDraft}
-                    placeholder={isDraft ? "Create agent to start chatting..." : "Type a message..."}
-                    className="flex-1 h-6 2xl:h-8 px-2 2xl:px-3 rounded-md 2xl:rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-[10px] 2xl:text-[12px] outline-none placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  <button
-                    onClick={handlePreviewSend}
-                    disabled={isDraft}
-                    className="w-6 h-6 2xl:w-8 2xl:h-8 shrink-0 rounded-md 2xl:rounded-lg text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}
-                  >
-                    <Send className="w-2.5 h-2.5 2xl:w-3.5 2xl:h-3.5" />
-                  </button>
-                </div>
+              {/* Input */}
+              <div className="border-t border-slate-100 dark:border-white/5 p-2 flex items-center gap-1.5 shrink-0">
+                <input
+                  type="text"
+                  value={previewInput}
+                  onChange={(e) => setPreviewInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handlePreviewSend()}
+                  disabled={isDraft}
+                  placeholder={isDraft ? "Create agent first..." : "Type a message..."}
+                  className="flex-1 h-7 px-2.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-[11px] outline-none placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <button
+                  onClick={handlePreviewSend}
+                  disabled={isDraft}
+                  className="w-7 h-7 shrink-0 rounded-lg text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}
+                >
+                  <Send className="w-3 h-3" />
+                </button>
+              </div>
 
-                {/* Home indicator */}
-                <div className="py-1 2xl:py-2 flex justify-center shrink-0">
-                  <div className="w-16 2xl:w-24 h-0.5 2xl:h-1 bg-slate-300 dark:bg-slate-600 rounded-full" />
-                </div>
+              {/* Powered by */}
+              <div className="border-t border-slate-100 dark:border-white/5 py-1 flex justify-center shrink-0 bg-slate-50 dark:bg-white/[0.02]">
+                <p className="text-[8px] text-slate-400 dark:text-slate-500">Powered by <span className="font-bold">BolChat</span></p>
+              </div>
+            </div>
+
+            {/* Launcher button (positioned like real widget) */}
+            <div className={cn(
+              "absolute bottom-3 z-10",
+              widget?.position === "bottom_left" ? "left-3" : "right-3"
+            )}>
+              <div
+                className="w-11 h-11 rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+                style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}
+              >
+                <LauncherIcon iconId={getWidgetTheme(widget).launcher_icon} className="w-5 h-5 text-white" />
               </div>
             </div>
           </div>
-
-          <p className="text-[8px] 2xl:text-[10px] text-slate-400 text-center max-w-[220px] 2xl:max-w-[260px] leading-relaxed">Live preview -- branding changes are reflected here.</p>
-          </>
           )}
         </div>
 
@@ -1043,11 +1150,11 @@ export default function BotManagerPage() {
             onClick={() => setShowPreview(false)}
           />
 
-          <div className="fixed bottom-6 right-6 z-70 w-[340px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] flex flex-col rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.3)] border border-white/10 xl:hidden">
+          <div className="fixed bottom-6 right-6 z-70 w-[340px] max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.3)] border border-white/10 xl:hidden" style={{ height: `min(${getWidgetTheme(widget).chat_height}px, calc(100vh - 5rem))` }}>
             <div className="p-4 flex items-center justify-between shrink-0" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}dd)` }}>
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-white" />
+                  <LauncherIcon iconId={getWidgetTheme(widget).launcher_icon} className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <p className="font-bold text-white text-sm">{currentAgent?.name || "Assistant"}</p>
@@ -1134,10 +1241,8 @@ export default function BotManagerPage() {
               </button>
             </div>
 
-            <div className="bg-slate-100 dark:bg-[#0a0f1e] border-t border-slate-100 dark:border-white/5 py-2 flex justify-center">
-              <p className="text-[9px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">
-                Live Preview -- This is how users see your bot
-              </p>
+            <div className="bg-slate-50 dark:bg-[#0a0f1e] border-t border-slate-100 dark:border-white/5 py-1.5 flex justify-center">
+              <p className="text-[8px] text-slate-400 dark:text-slate-500">Powered by <span className="font-bold">BolChat</span></p>
             </div>
           </div>
         </>

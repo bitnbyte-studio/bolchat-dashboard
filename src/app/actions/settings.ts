@@ -14,6 +14,13 @@ async function getAuthHeaders() {
   };
 }
 
+function extractError(detail: unknown, fallback: string): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) return detail.map((d: any) => d.msg || JSON.stringify(d)).join("; ");
+  if (detail && typeof detail === "object") return JSON.stringify(detail);
+  return fallback;
+}
+
 // API Keys
 export async function getApiKeysAction() {
   try {
@@ -24,8 +31,8 @@ export async function getApiKeysAction() {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Failed to fetch API keys");
-    
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to fetch API keys"));
+
     return { success: true, data: data.data };
   } catch (error: any) {
     console.error("getApiKeysAction error:", error);
@@ -43,7 +50,7 @@ export async function createApiKeyAction(name: string) {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Failed to create API key");
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to create API key"));
 
     revalidatePath("/dashboard/settings");
     return { success: true, data: data.data };
@@ -63,7 +70,7 @@ export async function revokeApiKeyAction(keyId: string) {
 
     if (!res.ok && res.status !== 204) {
       const data = await res.json();
-      throw new Error(data.detail || "Failed to revoke API key");
+      throw new Error(extractError(data.detail, "Failed to revoke API key"));
     }
 
     revalidatePath("/dashboard/settings");
