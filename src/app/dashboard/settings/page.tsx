@@ -2,26 +2,26 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Shield, Key, Settings, Palette, MessageSquare, 
-  CheckCircle2, Copy, Trash2, Plus, Loader2, Save,
-  ExternalLink, Code, Bot
+  Key,
+  CheckCircle2, Copy, Trash2, Plus, Loader2,
+  Code
 } from "lucide-react";
 import { 
   getApiKeysAction, createApiKeyAction, revokeApiKeyAction,
-  getWidgetSettingsAction, updateWidgetSettingsAction 
 } from "@/app/actions/settings";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("api-keys");
   const [apiKeys, setApiKeys] = useState<any[]>([]);
-  const [widget, setWidget] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [keyLoading, setKeyLoading] = useState(false);
-  const [saveLoading, setSaveLoading] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     init();
@@ -29,15 +29,8 @@ export default function SettingsPage() {
 
   async function init() {
     setLoading(true);
-    const [keysRes, widgetRes] = await Promise.all([
-      getApiKeysAction(),
-      getWidgetSettingsAction()
-    ]);
-
-    if (keysRes.success) setApiKeys(keysRes.data);
-    if (widgetRes.success && widgetRes.data.length > 0) {
-      setWidget(widgetRes.data[0]);
-    }
+    const keysRes = await getApiKeysAction();
+    if (keysRes.success) setApiKeys(keysRes.data || []);
     setLoading(false);
   }
 
@@ -54,25 +47,14 @@ export default function SettingsPage() {
   }
 
   async function handleRevokeKey(id: string) {
-    if (!confirm("Are you sure you want to revoke this API key?")) return;
     const res = await revokeApiKeyAction(id);
     if (res.success) init();
-  }
-
-  async function handleSaveWidget() {
-    if (!widget) return;
-    setSaveLoading(true);
-    const res = await updateWidgetSettingsAction(widget.id, {
-      brand_color: widget.brand_color,
-      welcome_message: widget.welcome_message,
-      is_active: widget.is_active
-    });
-    setSaveLoading(false);
+    setRevokeTarget(null);
   }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Copied to clipboard!");
+    toast("Copied to clipboard!", "success");
   };
 
   return (
@@ -86,37 +68,12 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl w-fit">
-        <button 
-          onClick={() => setActiveTab("api-keys")}
-          className={cn(
-            "flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all",
-            activeTab === "api-keys" 
-              ? "bg-white dark:bg-white/10 text-rose-500 shadow-sm shadow-rose-500/5" 
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          )}
-        >
-          <Key className="w-4 h-4" /> API Keys
-        </button>
-        <button 
-          onClick={() => setActiveTab("widget")}
-          className={cn(
-            "flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all",
-            activeTab === "widget" 
-              ? "bg-white dark:bg-white/10 text-rose-500 shadow-sm shadow-rose-500/5" 
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          )}
-        >
-          <Palette className="w-4 h-4" /> Widget Customizer
-        </button>
-      </div>
-
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center text-slate-400">
           <Loader2 className="w-10 h-10 animate-spin mb-4" />
           <p className="text-sm font-bold uppercase tracking-widest">Loading Settings...</p>
         </div>
-      ) : activeTab === "api-keys" ? (
+      ) : (
         <div className="space-y-6">
           {/* API Key List */}
           <div className="bg-white/70 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 shadow-xl rounded-[2.5rem] p-8">
@@ -154,7 +111,7 @@ export default function SettingsPage() {
                       ••••••••••••••••
                     </div>
                     <button 
-                      onClick={() => handleRevokeKey(key.id)}
+                      onClick={() => setRevokeTarget(key.id)}
                       className="p-2 text-slate-400 hover:text-red-500 transition-colors"
                       title="Revoke Key"
                     >
@@ -176,7 +133,7 @@ export default function SettingsPage() {
                 </div>
                 <h3 className="text-xl font-bold text-white font-cabinet">Integration Guide</h3>
               </div>
-              <p className="text-slate-400 text-sm mb-6 max-w-2xl">Copy this script into the <code>&lt;head&gt;</code> of your website to enable the BolChat bubble.</p>
+              <p className="text-slate-400 text-sm mb-6 max-w-2xl">Copy this script into the <code>&lt;head&gt;</code> of your website to enable the BolChat bubble. For a personalized embed snippet with your actual API key and agent ID, visit the <strong className="text-white">Deploy tab</strong> in the Chatbot Manager.</p>
               <div className="bg-black/40 border border-white/5 rounded-2xl p-6 relative group">
                 <pre className="text-xs text-rose-300 font-mono overflow-x-auto">
 {`<script 
@@ -195,99 +152,17 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Widget Editor */}
-          <div className="bg-white/70 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 shadow-xl rounded-[2.5rem] p-8 space-y-8">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white font-cabinet">Interface Settings</h3>
-              <div className="flex items-center gap-3">
-                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{widget?.is_active ? 'Active' : 'Inactive'}</span>
-                 <button 
-                    onClick={() => setWidget({...widget, is_active: !widget.is_active})}
-                    className={cn(
-                      "w-12 h-6 rounded-full transition-all relative p-1",
-                      widget?.is_active ? "bg-rose-500" : "bg-slate-300 dark:bg-white/20"
-                    )}
-                 >
-                    <div className={cn("w-4 h-4 bg-white rounded-full transition-all", widget?.is_active ? "translate-x-6" : "translate-x-0")}></div>
-                 </button>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Brand Color</label>
-                <div className="flex gap-4 items-center">
-                   <input 
-                      type="color" 
-                      value={widget?.brand_color || "#ff0066"} 
-                      onChange={(e) => setWidget({...widget, brand_color: e.target.value})}
-                      className="w-12 h-12 rounded-xl bg-transparent border-0 outline-none cursor-pointer p-0"
-                   />
-                   <input 
-                      type="text" 
-                      value={widget?.brand_color || "#ff0066"} 
-                      onChange={(e) => setWidget({...widget, brand_color: e.target.value})}
-                      className="flex-1 h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm font-mono dark:text-white"
-                   />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Welcome Message</label>
-                <textarea 
-                  value={widget?.welcome_message || ""} 
-                  onChange={(e) => setWidget({...widget, welcome_message: e.target.value})}
-                  placeholder="e.g. Hi! How can we help you today?"
-                  className="w-full h-32 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm dark:text-white resize-none outline-none focus:ring-2 focus:ring-rose-500/20"
-                />
-              </div>
-
-              <button 
-                onClick={handleSaveWidget}
-                disabled={saveLoading}
-                className="w-full py-4 bg-slate-900 dark:bg-white border-white/10 text-white dark:text-slate-900 rounded-2xl font-bold text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                {saveLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4" />}
-                Save Changes
-              </button>
-            </div>
-          </div>
-
-          {/* Live Preview Bubble */}
-          <div className="bg-slate-50 dark:bg-[#0d1425] border border-slate-200 dark:border-white/5 shadow-xl rounded-[2.5rem] p-8 flex flex-col items-center justify-center relative overflow-hidden">
-             <div className="text-center space-y-4 relative z-10">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Live Preview</p>
-                <div className="p-10 border-4 border-dashed border-slate-200 dark:border-white/10 rounded-[3rem] bg-white/30 dark:bg-white/5 backdrop-blur-xl">
-                   {/* The Actual Widget Preview UI Component */}
-                   <div 
-                      className="w-[280px] h-[400px] bg-white dark:bg-[#1a2135] rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-white/5 relative text-left flex flex-col"
-                   >
-                      <div className="p-4" style={{ backgroundColor: widget?.brand_color || '#ff0066' }}>
-                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                               <Bot className="w-4 h-4 text-white" />
-                            </div>
-                            <h4 className="text-sm font-bold text-white">Assistant</h4>
-                         </div>
-                      </div>
-                      <div className="p-4 flex-1 flex flex-col justify-end">
-                         <div className="bg-slate-100 dark:bg-white/5 p-3 rounded-2xl rounded-bl-none text-[12px] dark:text-slate-200 mb-2 max-w-[80%]">
-                            {widget?.welcome_message || "Hi there! How can I help you?"}
-                         </div>
-                      </div>
-                      <div className="p-3 border-t border-slate-100 dark:border-white/5 flex gap-2">
-                         <div className="flex-1 h-8 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/5"></div>
-                         <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: widget?.brand_color || '#ff0066' }}></div>
-                      </div>
-                   </div>
-                </div>
-                <p className="text-xs text-slate-500">This is how the widget will look on your site.</p>
-             </div>
-          </div>
-        </div>
       )}
+
+      <ConfirmDialog
+        open={revokeTarget !== null}
+        onClose={() => setRevokeTarget(null)}
+        onConfirm={() => revokeTarget && handleRevokeKey(revokeTarget)}
+        title="Revoke API Key"
+        description="This key will immediately stop working. Any integrations using it will break. This cannot be undone."
+        confirmLabel="Revoke Key"
+        variant="danger"
+      />
 
       {/* API Key Generation Modal */}
       {showKeyModal && (

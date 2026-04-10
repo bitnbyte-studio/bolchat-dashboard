@@ -15,9 +15,9 @@ export default function DashboardLayout({
       </div>
       
       <Sidebar />
-      <div className="flex-1 lg:ml-20 flex flex-col h-screen overflow-hidden relative z-10 transition-all duration-300 w-full">
+      <div className="flex-1 lg:ml-16 flex flex-col h-screen overflow-hidden relative z-10 transition-all duration-300 w-full">
         <Header />
-        <main className="flex-1 overflow-y-auto scroll-smooth animate-fade-in pb-24 scrollbar-hide p-4 md:p-8">
+        <main className="flex-1 overflow-y-auto scroll-smooth animate-fade-in pb-24 scrollbar-hide p-4 md:p-6">
           {children}
         </main>
       </div>

@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
   // 3. If on a protected path (e.g. /dashboard)
   if (pathname.startsWith("/dashboard")) {
     if (!accessToken && !refreshToken) {
-      const loginUrl = new URL("/login", request.url);
+      const loginUrl = new URL("/", request.url);
       return NextResponse.redirect(loginUrl);
     }
 

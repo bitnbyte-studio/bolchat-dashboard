@@ -3,10 +3,12 @@
 import React, { useState, useRef } from 'react';
 import { ShieldCheck, ArrowRight, KeyRound, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from "@/components/ui/toast";
 
 export default function TwoFactorPage() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
+  const { toast } = useToast();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const value = e.target.value;
@@ -32,7 +34,7 @@ export default function TwoFactorPage() {
     e.preventDefault();
     // Simulate verification
     if (code.join('').length === 6) {
-      alert("Verification successful! Redirecting to dashboard...");
+      toast("Verification successful! Redirecting to dashboard...", "success");
       // router.push('/dashboard');
     }
   };

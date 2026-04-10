@@ -15,7 +15,7 @@ const navItems = [
   { title: "Knowledge Base", href: "/dashboard/knowledge", icon: BookOpen },
   { title: "Chatbot Manager", href: "/dashboard/chatbots", icon: Bot },
   { title: "Analytics", href: "/dashboard/analytics", icon: LineChart },
-  { title: "Lead Capture", href: "/dashboard/leads", icon: UserPlus, badge: "12" },
+  { title: "Lead Capture", href: "/dashboard/leads", icon: UserPlus },
   { title: "Conversations", href: "/dashboard/conversations", icon: MessageSquare },
 ];
 
@@ -66,7 +66,7 @@ export function Header() {
   const { title, subtitle } = getPageMetadata(pathname);
 
   return (
-    <header className="sticky top-0 z-30 h-20 bg-white/80 dark:bg-[#0a0f1e]/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10 px-4 md:px-8 flex items-center justify-between shadow-sm transition-colors duration-300">
+    <header className="sticky top-0 z-30 h-16 bg-white/80 dark:bg-[#0a0f1e]/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10 px-4 md:px-6 flex items-center justify-between shadow-sm transition-colors duration-300">
       <div className="flex items-center gap-4">
         <Sheet>
           <SheetTrigger className="lg:hidden flex items-center justify-center w-10 h-10 shrink-0 text-slate-500 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl transition-colors cursor-pointer">
@@ -78,7 +78,7 @@ export function Header() {
         </Sheet>
         
         <div className="hidden sm:block">
-          <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white font-cabinet">{title}</h2>
+          <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">{title}</h2>
           <div className="flex items-center gap-2 mt-0.5">
              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{subtitle}</span>
           </div>
@@ -108,17 +108,6 @@ export function Header() {
           </div>
         )}
         
-        {!pathname.includes("analytics") && (
-          <div className="hidden lg:flex items-center bg-slate-100 dark:bg-white/5 rounded-full px-4 py-2 border border-slate-200 dark:border-white/10 focus-within:ring-2 focus-within:ring-rose-500/20 transition-all">
-            <Search className="text-slate-400 w-4 h-4 mr-3" />
-            <input 
-              type="text" 
-              placeholder="Search documents..." 
-              className="bg-transparent border-none outline-none text-sm text-slate-900 dark:text-white placeholder:text-slate-400 w-48 transition-colors"
-            />
-          </div>
-        )}
-
         <div className="flex items-center gap-2 md:gap-3">
           <ThemeToggle />
           
@@ -129,11 +118,11 @@ export function Header() {
           
           <div className="h-8 w-[1px] bg-slate-200 dark:bg-white/10 mx-1 hidden sm:block"></div>
           
-          <button className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-rose-300 dark:hover:border-rose-500/50 transition-all text-left">
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-200 ml-1 hidden sm:block">Bolchat Admin</span>
-            <Avatar className="w-8 h-8 rounded-xl object-cover">
+          <button className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-rose-300 dark:hover:border-rose-500/50 transition-all text-left">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 ml-1 hidden sm:block">Bolchat Admin</span>
+            <Avatar className="w-7 h-7 rounded-lg object-cover">
                <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Profile" />
-               <AvatarFallback className="bg-rose-500/20 text-rose-500 font-bold rounded-xl text-xs">BT</AvatarFallback>
+               <AvatarFallback className="bg-rose-500/20 text-rose-500 font-bold rounded-lg text-[10px]">BT</AvatarFallback>
             </Avatar>
           </button>
         </div>

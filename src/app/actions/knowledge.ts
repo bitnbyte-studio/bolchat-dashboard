@@ -63,7 +63,7 @@ export async function getDocumentsAction(kbId?: string) {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Failed to fetch documents");
+    if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail) || "Failed to fetch documents");
     
     return { success: true, data: data.data };
   } catch (error: any) {

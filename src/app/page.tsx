@@ -14,7 +14,7 @@ function SubmitButton() {
     <button 
       type="submit" 
       disabled={pending}
-      className="w-full h-16 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-2xl font-bold text-lg shadow-lg shadow-rose-500/20 hover:scale-[1.02] hover:shadow-rose-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
+      className="w-full h-12 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-bold text-base shadow-lg shadow-rose-500/20 hover:scale-[1.02] hover:shadow-rose-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
     >
       {pending ? (
         <>
@@ -57,7 +57,7 @@ export default function LoginPage() {
       <div className="absolute rounded-full filter blur-[120px] pointer-events-none z-0 opacity-40 bg-pink-600 w-[600px] h-[600px] -bottom-40 -right-40 animate-float" style={{ animationDelay: '-5s' }}></div>
       <div className="absolute rounded-full filter blur-[120px] pointer-events-none z-0 opacity-40 bg-indigo-600/30 w-[400px] h-[400px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse-slow"></div>
 
-      <div className="flex-1 flex flex-col justify-center w-full max-w-6xl mx-auto py-12 lg:py-16">
+      <div className="flex-1 flex flex-col justify-center w-full max-w-6xl mx-auto py-8 lg:py-12">
         <main className="w-full grid lg:grid-cols-2 gap-12 lg:gap-24 items-center relative z-10 animate-fade-in">
           {/* Left Side Content */}
         <div className="text-center lg:text-left space-y-8">
@@ -66,11 +66,11 @@ export default function LoginPage() {
           </div>
           
           <div className="space-y-4">
-            <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight font-cabinet">
+            <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight font-cabinet">
               Scale Your Support <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500">Without Boundaries.</span>
             </h1>
-            <p className="text-slate-400 text-lg max-w-md mx-auto lg:mx-0 leading-relaxed">
+            <p className="text-slate-400 text-base max-w-md mx-auto lg:mx-0 leading-relaxed">
               Log in to your command center to manage knowledge bases, track real-time analytics, and configure your multilingual AI agents.
             </p>
           </div>
@@ -95,7 +95,7 @@ export default function LoginPage() {
 
         {/* Right Side Card */}
         <div className="w-full max-w-md mx-auto">
-          <div className="bg-white/[0.03] backdrop-blur-[20px] border border-white/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] p-10 rounded-[2.5rem] relative overflow-hidden">
+          <div className="bg-white/[0.03] backdrop-blur-[20px] border border-white/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] p-8 rounded-3xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 blur-3xl rounded-full"></div>
             
             <div className="mb-10 text-center lg:text-left">
@@ -114,7 +114,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Business Email</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-500 group-focus-within:text-rose-500 transition-colors">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-rose-500 transition-colors">
                     <Mail className="w-5 h-5" />
                   </div>
                   <input 
@@ -122,7 +122,7 @@ export default function LoginPage() {
                     type="email" 
                     required 
                     placeholder="your@company.com" 
-                    className="w-full h-14 pl-14 pr-6 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-600 outline-none transition-all focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
+                    className="w-full h-12 pl-12 pr-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-600 outline-none transition-all focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
                   />
                 </div>
               </div>
@@ -135,7 +135,7 @@ export default function LoginPage() {
                   </Link>
                 </div>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-500 group-focus-within:text-rose-500 transition-colors">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-rose-500 transition-colors">
                     <Lock className="w-5 h-5" />
                   </div>
                   <input 
@@ -145,12 +145,12 @@ export default function LoginPage() {
                     pattern=".*[A-Z].*"
                     title="Password must contain at least one uppercase letter"
                     placeholder="••••••••" 
-                    className="w-full h-14 pl-14 pr-12 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-600 outline-none transition-all focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
+                    className="w-full h-12 pl-12 pr-10 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-600 outline-none transition-all focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
                   />
                   <button 
                     type="button" 
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-5 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>

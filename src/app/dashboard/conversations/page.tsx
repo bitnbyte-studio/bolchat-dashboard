@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useRef } from "react";
 import { 
   Filter, RefreshCcw, Search, Globe, MapPin, 
@@ -69,11 +71,11 @@ export default function ConversationsPage() {
       <div className="hidden dark:block absolute rounded-full bg-pink-600/10 blur-[120px] w-[400px] h-[400px] bottom-0 right-0 pointer-events-none z-0"></div>
 
       {/* Left Column: Chat List */}
-      <section className="w-full lg:w-2/5 xl:w-[420px] flex-shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-[#0d1425]/50 flex flex-col z-10">
-        <div className="p-6 space-y-6">
+      <section className="w-full lg:w-2/5 xl:w-[380px] flex-shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-[#0d1425]/50 flex flex-col z-10">
+        <div className="p-5 space-y-4">
           <div className="flex justify-between items-center sm:items-end">
             <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white font-cabinet">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                 All Conversations <span className="text-slate-500 dark:text-slate-400 font-medium ml-1 text-[15px]">({conversations.length})</span>
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 hidden sm:block">Active chats and history</p>
@@ -90,11 +92,11 @@ export default function ConversationsPage() {
           
           <div className="space-y-4">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
               <input 
                 type="text" 
                 placeholder="Search messages, users..." 
-                className="w-full h-12 pl-11 pr-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="w-full h-10 pl-9 pr-3 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
             
@@ -129,7 +131,7 @@ export default function ConversationsPage() {
               key={chat.id}
               onClick={() => setActiveChatId(chat.id)}
               className={cn(
-                "p-4 rounded-2xl cursor-pointer transition-all group flex gap-4 border",
+                "p-3 rounded-xl cursor-pointer transition-all group flex gap-3 border",
                 activeChatId === chat.id 
                   ? "bg-rose-50 dark:bg-rose-500/10 border-rose-500" 
                   : "bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-white/5"
@@ -137,7 +139,7 @@ export default function ConversationsPage() {
             >
               <div className="relative flex-shrink-0 pt-0.5">
                 <div className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm",
+                  "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm",
                   getAvatarColor(chat.id) === "orange" && "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-500",
                   getAvatarColor(chat.id) === "blue" && "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-500",
                   getAvatarColor(chat.id) === "purple" && "bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-500",
@@ -175,9 +177,9 @@ export default function ConversationsPage() {
             </div>
           ))}
 
-          <div className="p-4 border-t border-slate-200 dark:border-white/5 mt-4">
-            <button className="w-full py-3 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 font-bold text-xs uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 dark:hover:text-slate-300 transition-all cursor-pointer">
-              Load More History
+          <div className="p-3 border-t border-slate-200 dark:border-white/5 mt-2">
+            <button className="w-full py-2 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 font-bold text-[10px] uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 dark:hover:text-slate-300 transition-all cursor-pointer">
+              Load More
             </button>
           </div>
         </div>
@@ -187,10 +189,10 @@ export default function ConversationsPage() {
       <section className="flex-1 flex flex-col relative bg-slate-50 dark:bg-transparent z-10">
         
         {/* Chat Header */}
-        <div className="p-4 sm:p-6 sticky top-0 bg-white/80 dark:bg-[#0a0f1e]/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-20">
-          <div className="flex items-center gap-4">
+        <div className="p-3 sm:p-4 sticky top-0 bg-white/80 dark:bg-[#0a0f1e]/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-20">
+          <div className="flex items-center gap-3">
             <div className={cn(
-              "w-12 sm:w-14 h-12 sm:h-14 rounded-full flex items-center justify-center font-bold text-lg ring-4 ring-white dark:ring-white/5 shrink-0",
+              "w-10 sm:w-12 h-10 sm:h-12 rounded-full flex items-center justify-center font-bold text-base ring-4 ring-white dark:ring-white/5 shrink-0",
               activeChatId ? (
                 getAvatarColor(activeChatId) === "orange" && "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-500" ||
                 getAvatarColor(activeChatId) === "blue" && "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-500" ||
@@ -200,8 +202,8 @@ export default function ConversationsPage() {
             )}>
               {activeChatDetail ? getInitials(activeChatDetail.metadata?.user_name || "User") : "??"}
             </div>
-            <div className="space-y-1 min-w-0">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3 truncate">
+            <div className="space-y-0.5 min-w-0">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
                 {activeChatDetail ? (activeChatDetail.metadata?.user_name || "Anonymous User") : "Select a conversation"}
                 {activeChatDetail?.status === "ACTIVE" && (
                   <span className="px-2 py-0.5 rounded-md bg-rose-500 text-white text-[8px] sm:text-[9px] font-bold uppercase tracking-widest shadow-md shadow-rose-500/20 shrink-0">Live</span>
@@ -217,21 +219,21 @@ export default function ConversationsPage() {
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button className="p-2 sm:p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-white transition-all cursor-pointer shadow-sm dark:shadow-none" title="Archive">
-              <Archive className="w-5 h-5" />
+            <button className="p-2 sm:p-2.5 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-white transition-all cursor-pointer shadow-sm dark:shadow-none" title="Archive">
+              <Archive className="w-4 h-4" />
             </button>
-            <button className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-transparent text-slate-900 font-bold text-sm hover:bg-slate-50 dark:hover:bg-rose-500 dark:hover:text-white transition-all flex items-center gap-2 shadow-sm dark:shadow-xl dark:shadow-white/5 cursor-pointer">
-              <CheckCircle className="w-4 h-4" /> 
+            <button className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-white dark:bg-white border border-slate-200 dark:border-transparent text-slate-900 font-bold text-xs hover:bg-slate-50 dark:hover:bg-rose-500 dark:hover:text-white transition-all flex items-center gap-1.5 shadow-sm dark:shadow-xl dark:shadow-white/5 cursor-pointer">
+              <CheckCircle className="w-3.5 h-3.5" /> 
               <span className="hidden sm:block">Resolve</span>
             </button>
-            <button className="p-2 sm:p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10 transition-all cursor-pointer shadow-sm dark:shadow-none items-center hidden sm:flex">
-              <MoreVertical className="w-5 h-5" />
+            <button className="p-2 sm:p-2.5 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10 transition-all cursor-pointer shadow-sm dark:shadow-none items-center hidden sm:flex">
+              <MoreVertical className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Chat History Container */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide p-4 sm:p-8 space-y-6 sm:space-y-8 pb-36 sm:pb-40">
+        <div className="flex-1 overflow-y-auto scrollbar-hide p-4 sm:p-5 space-y-4 pb-24 sm:pb-28">
           {detailLoading ? (
              <div className="flex flex-col items-center justify-center h-full text-slate-400">
                 <Loader2 className="w-10 h-10 animate-spin mb-4" />
@@ -247,16 +249,16 @@ export default function ConversationsPage() {
              </div>
           ) : (
             activeChatDetail.messages?.map((msg: any) => (
-              <div key={msg.id} className={cn("flex gap-3 sm:gap-4", msg.role === "user" ? "justify-end" : "justify-start")}>
+              <div key={msg.id} className={cn("flex gap-2 sm:gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
                 {msg.role !== "user" && (
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-rose-500/20">
-                    <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-rose-500/20">
+                    <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                 )}
                 
-                <div className={cn("max-w-[85%] sm:max-w-[75%] space-y-2", msg.role === "user" && "text-right")}>
+                <div className={cn("max-w-[85%] sm:max-w-[75%] space-y-1.5", msg.role === "user" && "text-right")}>
                   <div className={cn(
-                    "p-4 sm:p-5 text-[13px] sm:text-sm leading-relaxed rounded-2xl shadow-sm",
+                    "p-3 text-[13px] leading-relaxed rounded-xl shadow-sm",
                     msg.role === "user" 
                       ? "bg-rose-100 dark:bg-gradient-to-tr dark:from-rose-500 dark:to-pink-500 text-rose-900 dark:text-white rounded-tr-none text-left"
                       : "bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-tl-none"
@@ -270,7 +272,7 @@ export default function ConversationsPage() {
 
                 {msg.role === "user" && (
                    <div className={cn(
-                    "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0",
+                    "w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-[10px] flex-shrink-0",
                     getAvatarColor(activeChatDetail.id) === "orange" && "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-500",
                     getAvatarColor(activeChatDetail.id) === "blue" && "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-500",
                     getAvatarColor(activeChatDetail.id) === "purple" && "bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-500",
@@ -286,28 +288,28 @@ export default function ConversationsPage() {
         </div>
 
         {/* Input Footer Area */}
-        <div className="absolute bottom-0 inset-x-0 p-4 sm:p-6 bg-slate-50/90 dark:bg-[#0a0f1e]/90 backdrop-blur-md border-t border-slate-200 dark:border-white/5 z-30">
-          <div className="max-w-4xl mx-auto flex gap-3 sm:gap-4 items-end">
-            <div className="flex-1 bg-white dark:bg-white/[0.03] rounded-2xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-2xl overflow-hidden p-2 relative">
+        <div className="absolute bottom-0 inset-x-0 p-3 bg-slate-50/90 dark:bg-[#0a0f1e]/90 backdrop-blur-md border-t border-slate-200 dark:border-white/5 z-30">
+          <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
+            <div className="flex-1 bg-white dark:bg-white/[0.03] rounded-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-2xl overflow-hidden p-1.5 relative">
               <div className="absolute top-0 left-0 w-1 bg-rose-500 h-full hidden dark:block"></div>
               <textarea 
                 placeholder="Type a message to Marco Rossi (AI will translate instantly)..." 
-                className="w-full h-12 sm:h-16 bg-transparent text-sm text-slate-900 dark:text-white px-3 sm:px-4 pt-2 sm:pt-3 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                className="w-full h-10 sm:h-12 bg-transparent text-[13px] text-slate-900 dark:text-white px-3 pt-2 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
               />
               <div className="flex items-center justify-between px-2 pb-1">
-                <div className="flex items-center gap-1">
-                  <button className="p-2 sm:p-2.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer">
-                    <Paperclip className="w-5 h-5 sm:w-5 sm:h-5" />
+                <div className="flex items-center gap-0.5">
+                  <button className="p-1.5 sm:p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer">
+                    <Paperclip className="w-4 h-4" />
                   </button>
-                  <button className="p-2 sm:p-2.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer">
-                    <Smile className="w-5 h-5 sm:w-5 sm:h-5" />
+                  <button className="p-1.5 sm:p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer">
+                    <Smile className="w-4 h-4" />
                   </button>
-                  <button className="p-2 sm:p-2.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer hidden sm:block">
-                    <ImageIcon className="w-5 h-5 sm:w-5 sm:h-5" />
+                  <button className="p-1.5 sm:p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer hidden sm:block">
+                    <ImageIcon className="w-4 h-4" />
                   </button>
                   <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1 sm:mx-2 hidden sm:block"></div>
-                  <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest cursor-pointer">
-                    <Zap className="w-3.5 h-3.5" /> Use Prompt
+                  <button className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all text-[9px] font-bold uppercase tracking-widest cursor-pointer">
+                    <Zap className="w-3 h-3" /> Use Prompt
                   </button>
                 </div>
                 <div className="flex items-center gap-4">
@@ -317,8 +319,8 @@ export default function ConversationsPage() {
                 </div>
               </div>
             </div>
-            <button className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/20 hover:scale-[1.05] active:scale-95 transition-all cursor-pointer">
-              <Send className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5" />
+            <button className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/20 hover:scale-[1.05] active:scale-95 transition-all cursor-pointer">
+              <Send className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" />
             </button>
           </div>
         </div>

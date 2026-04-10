@@ -14,6 +14,13 @@ async function getAuthHeaders() {
   };
 }
 
+function extractError(detail: unknown, fallback: string): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) return detail.map((d: any) => d.msg || JSON.stringify(d)).join("; ");
+  if (detail && typeof detail === "object") return JSON.stringify(detail);
+  return fallback;
+}
+
 export async function getAgentsAction() {
   try {
     const headers = await getAuthHeaders();
@@ -23,7 +30,7 @@ export async function getAgentsAction() {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Failed to fetch agents");
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to fetch agents"));
     
     return { success: true, data: data.data };
   } catch (error: any) {
@@ -32,7 +39,12 @@ export async function getAgentsAction() {
   }
 }
 
-export async function createAgentAction(formData: { name: string; description?: string; systemPrompt?: string }) {
+export async function createAgentAction(formData: {
+  name: string;
+  description?: string;
+  systemPrompt?: string;
+  settings?: Record<string, unknown>;
+}) {
   try {
     const headers = await getAuthHeaders();
     const res = await fetch(`${baseUrl}/api/v1/agents`, {
@@ -42,12 +54,12 @@ export async function createAgentAction(formData: { name: string; description?: 
         name: formData.name,
         description: formData.description || "",
         system_prompt: formData.systemPrompt || "",
-        settings: {}
+        settings: formData.settings || {},
       }),
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Failed to create agent");
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to create agent"));
 
     revalidatePath("/dashboard/chatbots");
     return { success: true, data: data.data };
@@ -67,7 +79,7 @@ export async function updateAgentAction(agentId: string, updates: any) {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Failed to update agent");
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to update agent"));
 
     revalidatePath("/dashboard/chatbots");
     return { success: true, data: data.data };
@@ -87,7 +99,7 @@ export async function deleteAgentAction(agentId: string) {
 
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.detail || "Failed to delete agent");
+      throw new Error(extractError(data.detail, "Failed to delete agent"));
     }
 
     revalidatePath("/dashboard/chatbots");
@@ -98,21 +110,17 @@ export async function deleteAgentAction(agentId: string) {
   }
 }
 
-export async function previewChatAction(agentId: string, query: string, history: any[] = []) {
+export async function previewChatAction(agentId: string, question: string) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${baseUrl}/api/v1/chat/query`, {
+    const res = await fetch(`${baseUrl}/api/v1/agents/${agentId}/preview`, {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        agentId: agentId,
-        query: query,
-        history: history
-      }),
+      body: JSON.stringify({ question }),
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Failed to get AI response");
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to get AI response"));
 
     return { success: true, data: data.data };
   } catch (error: any) {
@@ -120,3 +128,125 @@ export async function previewChatAction(agentId: string, query: string, history:
     return { success: false, error: error.message };
   }
 }
+
+// ── Widget Settings ──
+
+export async function getWidgetAction(agentId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${baseUrl}/api/v1/widgets/${agentId}`, {
+      headers,
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to fetch widget"));
+
+    return { success: true, data: data.data };
+  } catch (error: any) {
+    console.error("getWidgetAction error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateWidgetAction(agentId: string, updates: any) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${baseUrl}/api/v1/widgets/${agentId}`, {
+      method: "PATCH",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to update widget"));
+
+    return { success: true, data: data.data };
+  } catch (error: any) {
+    console.error("updateWidgetAction error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ── Publish ──
+
+export async function publishAgentAction(agentId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${baseUrl}/api/v1/agents/${agentId}/publish`, {
+      method: "POST",
+      headers,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to publish agent"));
+
+    revalidatePath("/dashboard/chatbots");
+    return { success: true, data: data.data };
+  } catch (error: any) {
+    console.error("publishAgentAction error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ── Knowledge Base Linking ──
+
+export async function getAgentKBsAction(agentId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${baseUrl}/api/v1/agents/${agentId}/knowledge-bases`, {
+      headers,
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to fetch agent KBs"));
+
+    return { success: true, data: data.data };
+  } catch (error: any) {
+    console.error("getAgentKBsAction error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function linkKBAction(agentId: string, kbId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${baseUrl}/api/v1/agents/${agentId}/knowledge-bases`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ knowledge_base_id: kbId }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to link KB"));
+
+    revalidatePath("/dashboard/chatbots");
+    return { success: true };
+  } catch (error: any) {
+    console.error("linkKBAction error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function unlinkKBAction(agentId: string, kbId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${baseUrl}/api/v1/agents/${agentId}/knowledge-bases/${kbId}`, {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!res.ok && res.status !== 204) {
+      const data = await res.json();
+      throw new Error(extractError(data.detail, "Failed to unlink KB"));
+    }
+
+    revalidatePath("/dashboard/chatbots");
+    return { success: true };
+  } catch (error: any) {
+    console.error("unlinkKBAction error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
