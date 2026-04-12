@@ -6,13 +6,15 @@ import {
   ChevronDown, Info, Palette, Code, Eye, ChevronRight,
   X, Send, Loader2, Save, Database,
   Rocket, Copy, Key, CheckCircle2, Circle,
-  RotateCcw, ArrowRight, MessageCircle, Headphones, HelpCircle, Zap
+  RotateCcw, ArrowRight, MessageCircle, Headphones, HelpCircle, Zap,
+  Trash2, AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getAgentsAction, createAgentAction, updateAgentAction,
   previewChatAction,
-  getWidgetAction, updateWidgetAction, publishAgentAction
+  getWidgetAction, updateWidgetAction, publishAgentAction,
+  deleteAgentAction
 } from "@/app/actions/agents";
 import { getKBsAction } from "@/app/actions/knowledge";
 import { getApiKeysAction, createApiKeyAction } from "@/app/actions/settings";
@@ -120,6 +122,11 @@ const LAUNCHER_ICONS = [
   { id: "zap", label: "Zap", Icon: Zap },
 ] as const;
 
+const WIDGET_API_URL =
+  process.env.NEXT_PUBLIC_WIDGET_API_URL ||
+  "https://bolchat-backend-api-ggb9ghbnctddhufy.centralindia-01.azurewebsites.net";
+const WIDGET_SCRIPT_URL = process.env.NEXT_PUBLIC_WIDGET_URL || `${WIDGET_API_URL}/static/widget.js`;
+
 function getWidgetTheme(widget: any) {
   return {
     launcher_icon: "chat",
@@ -146,6 +153,9 @@ export default function BotManagerPage() {
   const [currentAgent, setCurrentAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmName, setDeleteConfirmName] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [allKBs, setAllKBs] = useState<any[]>([]);
@@ -352,6 +362,50 @@ export default function BotManagerPage() {
     setPublishLoading(false);
   }
 
+  function openDeleteModal() {
+    if (!currentAgent?.id) return;
+    setDeleteConfirmName("");
+    setDeleteModalOpen(true);
+  }
+
+  function closeDeleteModal() {
+    if (deleteLoading) return;
+    setDeleteModalOpen(false);
+    setDeleteConfirmName("");
+  }
+
+  async function handleDeleteAgent() {
+    if (!currentAgent?.id || deleteConfirmName !== currentAgent.name) return;
+
+    setDeleteLoading(true);
+    const agentId = currentAgent.id;
+    const res = await deleteAgentAction(agentId);
+
+    if (res.success) {
+      toast("Agent deleted", "success");
+      const remainingAgents = agents.filter((agent) => agent.id !== agentId);
+      setAgents(remainingAgents);
+      setCurrentAgent(
+        remainingAgents[0] || {
+          name: "",
+          description: "",
+          system_prompt: "",
+          settings: { ...DEFAULT_SETTINGS },
+        }
+      );
+      setWidget(null);
+      setAllKBs([]);
+      setPreviewMessages([]);
+      setActiveTab("Basic Info");
+      setDeleteModalOpen(false);
+      setDeleteConfirmName("");
+    } else {
+      toast(res.error || "Failed to delete agent", "error");
+    }
+
+    setDeleteLoading(false);
+  }
+
   async function handleCreateKey() {
     if (!newKeyName.trim()) return;
     setKeyCreateLoading(true);
@@ -412,11 +466,13 @@ export default function BotManagerPage() {
   }
   const validationIssue = getValidationIssue();
   const canSave = !validationIssue && !saveLoading;
+  const canDeleteAgent = !!currentAgent?.id && deleteConfirmName === currentAgent.name && !deleteLoading;
 
   const embedSnippet = `<script
-  src="https://cdn.bolchat.ai/v1/widget.js"
+  src="${WIDGET_SCRIPT_URL}"
   data-key="YOUR_API_KEY"
   data-agent="${currentAgent?.id || "YOUR_AGENT_ID"}"
+  data-api-url="${WIDGET_API_URL}"
   async
 ></script>`;
 
@@ -530,6 +586,14 @@ export default function BotManagerPage() {
                   className="px-5 py-2.5 bg-white dark:bg-white/5 text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/10 hover:scale-105 transition-all cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 xl:hidden"
                 >
                   <Eye className="w-4 h-4" /> Test Agent
+                </button>
+                <button
+                  onClick={openDeleteModal}
+                  disabled={!currentAgent?.id || deleteLoading}
+                  className="px-4 py-2.5 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-500/20 rounded-xl font-bold text-sm hover:bg-red-100 dark:hover:bg-red-500/15 transition-all cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Delete</span>
                 </button>
                 <button
                   onClick={() => handleSave(false)}
@@ -1311,6 +1375,76 @@ export default function BotManagerPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Delete Agent Modal */}
+      {deleteModalOpen && currentAgent?.id && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-lg bg-white dark:bg-[#1a2135] rounded-[2rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10">
+            <div className="p-8 space-y-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white font-cabinet">Delete agent</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                      This permanently deletes <strong className="text-slate-900 dark:text-white">{currentAgent.name}</strong>, its widget settings, and knowledge-base links. Existing embed scripts for this agent will stop working.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeDeleteModal}
+                  disabled={deleteLoading}
+                  className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="rounded-2xl border border-red-100 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4">
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  To confirm, type <strong>{currentAgent.name}</strong> below.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Agent name</label>
+                <input
+                  type="text"
+                  value={deleteConfirmName}
+                  onChange={(e) => setDeleteConfirmName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && canDeleteAgent) handleDeleteAgent();
+                  }}
+                  autoFocus
+                  disabled={deleteLoading}
+                  placeholder={currentAgent.name}
+                  className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 disabled:opacity-50"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  onClick={closeDeleteModal}
+                  disabled={deleteLoading}
+                  className="flex-1 h-11 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAgent}
+                  disabled={!canDeleteAgent}
+                  className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-red-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  Delete agent
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── API Key Modal ── */}

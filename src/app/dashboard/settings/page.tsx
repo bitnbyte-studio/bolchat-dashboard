@@ -13,6 +13,11 @@ import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 
+const WIDGET_API_URL =
+  process.env.NEXT_PUBLIC_WIDGET_API_URL ||
+  "https://bolchat-backend-api-ggb9ghbnctddhufy.centralindia-01.azurewebsites.net";
+const WIDGET_SCRIPT_URL = process.env.NEXT_PUBLIC_WIDGET_URL || `${WIDGET_API_URL}/static/widget.js`;
+
 export default function SettingsPage() {
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +61,14 @@ export default function SettingsPage() {
     navigator.clipboard.writeText(text);
     toast("Copied to clipboard!", "success");
   };
+
+  const integrationSnippet = `<script
+  src="${WIDGET_SCRIPT_URL}"
+  data-key="YOUR_API_KEY"
+  data-agent="YOUR_AGENT_ID"
+  data-api-url="${WIDGET_API_URL}"
+  async
+></script>`;
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 animate-fade-in pb-20">
@@ -136,14 +149,10 @@ export default function SettingsPage() {
               <p className="text-slate-400 text-sm mb-6 max-w-2xl">Copy this script into the <code>&lt;head&gt;</code> of your website to enable the BolChat bubble. For a personalized embed snippet with your actual API key and agent ID, visit the <strong className="text-white">Deploy tab</strong> in the Chatbot Manager.</p>
               <div className="bg-black/40 border border-white/5 rounded-2xl p-6 relative group">
                 <pre className="text-xs text-rose-300 font-mono overflow-x-auto">
-{`<script 
-  src="https://cdn.bolchat.ai/v1/widget.js" 
-  data-key="YOUR_API_KEY"
-  async
-></script>`}
+{integrationSnippet}
                 </pre>
                 <button 
-                  onClick={() => copyToClipboard('<script src="https://cdn.bolchat.ai/v1/widget.js" data-key="YOUR_API_KEY" async></script>')}
+                  onClick={() => copyToClipboard(integrationSnippet)}
                   className="absolute top-4 right-4 p-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100"
                 >
                   <Copy className="w-4 h-4" />
