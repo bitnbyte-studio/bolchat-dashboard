@@ -17,7 +17,7 @@ import {
   deleteAgentAction
 } from "@/app/actions/agents";
 import { getKBsAction } from "@/app/actions/knowledge";
-import { getApiKeysAction, createApiKeyAction } from "@/app/actions/settings";
+import { getApiKeysAction, createApiKeyAction, revokeApiKeyAction } from "@/app/actions/settings";
 import { useToast } from "@/components/ui/toast";
 
 type AgentSettings = {
@@ -172,6 +172,8 @@ export default function BotManagerPage() {
   const [keyCreateLoading, setKeyCreateLoading] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
   const [showKeyModal, setShowKeyModal] = useState(false);
+  const [revokeKeyTarget, setRevokeKeyTarget] = useState<any>(null);
+  const [revokeKeyLoading, setRevokeKeyLoading] = useState(false);
 
   // ── Helpers ──
 
@@ -418,6 +420,21 @@ export default function BotManagerPage() {
       toast(res.error || "Failed to create key", "error");
     }
     setKeyCreateLoading(false);
+  }
+
+  async function handleRevokeApiKey() {
+    if (!revokeKeyTarget?.id) return;
+
+    setRevokeKeyLoading(true);
+    const res = await revokeApiKeyAction(revokeKeyTarget.id);
+    if (res.success) {
+      toast("API key revoked", "success");
+      setApiKeys((prev) => prev.filter((key) => key.id !== revokeKeyTarget.id));
+      setRevokeKeyTarget(null);
+    } else {
+      toast(res.error || "Failed to revoke API key", "error");
+    }
+    setRevokeKeyLoading(false);
   }
 
   function copyToClipboard(text: string) {
@@ -1014,8 +1031,8 @@ export default function BotManagerPage() {
                   <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">API Keys</h4>
-                        <p className="text-xs text-slate-400 mt-0.5">Used to authenticate the widget on your website.</p>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">Account API Keys</h4>
+                        <p className="text-xs text-slate-400 mt-0.5">Keys belong to your account and can be used with any published agent in this workspace.</p>
                       </div>
                       <button
                         onClick={() => setShowKeyModal(true)}
@@ -1023,6 +1040,9 @@ export default function BotManagerPage() {
                       >
                         <Plus className="w-4 h-4" /> Create Key
                       </button>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-3 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Full API keys are shown only once when created. If you lose a key, revoke it and create a new one.
                     </div>
                     {apiKeysLoading ? (
                       <div className="py-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
@@ -1038,7 +1058,17 @@ export default function BotManagerPage() {
                               <Key className="w-4 h-4 text-slate-400" />
                               <span className="text-sm font-bold text-slate-900 dark:text-white">{key.name}</span>
                             </div>
-                            <span className="text-xs text-slate-400 font-mono">{key.prefix}........</span>
+                            <div className="text-right">
+                              <span className="text-xs text-slate-400 font-mono">{key.prefix}........</span>
+                              <p className="text-[10px] text-slate-400 mt-0.5">Full key hidden after creation</p>
+                            </div>
+                            <button
+                              onClick={() => setRevokeKeyTarget(key)}
+                              className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                              title="Revoke API key"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -1447,6 +1477,58 @@ export default function BotManagerPage() {
         </div>
       )}
 
+      {/* Revoke API Key Modal */}
+      {revokeKeyTarget && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-white dark:bg-[#1a2135] rounded-[2rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10 p-8 space-y-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="w-11 h-11 rounded-xl bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white font-cabinet">Revoke API key</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    This will immediately stop any widget using <strong className="text-slate-900 dark:text-white">{revokeKeyTarget.name}</strong>.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setRevokeKeyTarget(null)}
+                disabled={revokeKeyLoading}
+                className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Prefix: <span className="font-mono">{revokeKeyTarget.prefix}........</span>. This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setRevokeKeyTarget(null)}
+                disabled={revokeKeyLoading}
+                className="flex-1 h-11 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRevokeApiKey}
+                disabled={revokeKeyLoading}
+                className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-red-600/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {revokeKeyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Revoke key
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── API Key Modal ── */}
       {showKeyModal && (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -1460,6 +1542,11 @@ export default function BotManagerPage() {
 
             {!generatedKey ? (
               <div className="space-y-6">
+                <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4">
+                  <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                    You will see the full API key only once. Copy it before closing this window.
+                  </p>
+                </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Key Name</label>
                   <input
@@ -1491,6 +1578,12 @@ export default function BotManagerPage() {
                   <button onClick={() => copyToClipboard(generatedKey)} className="shrink-0 text-white/40 hover:text-white transition-colors">
                     <Copy className="w-4 h-4" />
                   </button>
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mb-2">Use this key in your widget snippet</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Existing keys are displayed only by prefix. If you close this window without copying the full key, create a new key.
+                  </p>
                 </div>
                 <button
                   onClick={() => { setShowKeyModal(false); setGeneratedKey(null); }}

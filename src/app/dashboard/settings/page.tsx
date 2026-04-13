@@ -92,8 +92,8 @@ export default function SettingsPage() {
           <div className="bg-white/70 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 shadow-xl rounded-[2.5rem] p-8">
             <div className="flex justify-between items-center mb-8">
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white font-cabinet">Active Keys</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Keys used to authenticate your widget on your website.</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white font-cabinet">Account API Keys</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Keys belong to your account and can be used with any published agent in this workspace.</p>
               </div>
               <button 
                 onClick={() => setShowKeyModal(true)}
@@ -101,6 +101,12 @@ export default function SettingsPage() {
               >
                 <Plus className="w-4 h-4" /> Create New Key
               </button>
+            </div>
+
+            <div className="mb-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Full API keys are shown only once when created. Existing keys display only their prefix. If you lose a key, revoke it and create a new one.
+              </p>
             </div>
 
             <div className="space-y-3">
@@ -117,6 +123,7 @@ export default function SettingsPage() {
                     <div>
                       <h4 className="text-sm font-bold text-slate-900 dark:text-white">{key.name}</h4>
                       <p className="text-[10px] text-slate-400 font-mono mt-0.5 tracking-wider uppercase">Created {new Date(key.created_at).toLocaleDateString()}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">Full key hidden after creation</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -184,6 +191,11 @@ export default function SettingsPage() {
 
               {!generatedKey ? (
                 <div className="space-y-6">
+                   <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4">
+                     <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                       You will see the full API key only once. Copy it before closing this window.
+                     </p>
+                   </div>
                    <div className="space-y-2">
                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Key Name</label>
                      <input 
@@ -214,6 +226,11 @@ export default function SettingsPage() {
                       <button onClick={() => copyToClipboard(generatedKey)} className="shrink-0 text-white/40 hover:text-white transition-colors">
                         <Copy className="w-4 h-4" />
                       </button>
+                   </div>
+                   <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Existing keys are displayed only by prefix. If you close this window without copying the full key, create a new key.
+                      </p>
                    </div>
                    <button 
                       onClick={() => {setShowKeyModal(false); setGeneratedKey(null);}}
