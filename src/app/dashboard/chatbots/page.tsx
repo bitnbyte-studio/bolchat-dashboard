@@ -7,7 +7,8 @@ import {
   X, Send, Loader2, Save, Database,
   Rocket, Copy, Key, CheckCircle2, Circle,
   RotateCcw, ArrowRight, MessageCircle, Headphones, HelpCircle, Zap,
-  Trash2, AlertTriangle
+  Trash2, AlertTriangle, Brain, MessageSquare, Flame,
+  Square, Flower2, ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -120,6 +121,9 @@ const LAUNCHER_ICONS = [
   { id: "headphones", label: "Support", Icon: Headphones },
   { id: "help", label: "Help", Icon: HelpCircle },
   { id: "zap", label: "Zap", Icon: Zap },
+  { id: "brain", label: "Intelligence", Icon: Brain },
+  { id: "messagesquare", label: "Message", Icon: MessageSquare },
+  { id: "sparkles", label: "AI Sparkles", Icon: Sparkles },
 ] as const;
 
 const WIDGET_API_URL =
@@ -130,7 +134,16 @@ const WIDGET_SCRIPT_URL = process.env.NEXT_PUBLIC_WIDGET_URL || `${WIDGET_API_UR
 function getWidgetTheme(widget: any) {
   return {
     launcher_icon: "chat",
+    launcher_text: "",
+    launcher_shape: "circle",
+    tooltip_text: "",
     chat_height: 520,
+    teaser_text: "",
+    glass_effect: false,
+    gradient_enabled: false,
+    attention_dot: false,
+    entrance_animation: "none",
+    suggested_replies: [] as string[],
     ...(widget?.theme || {}),
   };
 }
@@ -593,6 +606,8 @@ export default function BotManagerPage() {
                   </div>
                   <p className="text-xs text-slate-500">
                     {isDraft ? "Fill in the details below and click Save & Next" : `Created on ${currentAgent ? new Date(currentAgent.created_at).toLocaleDateString() : "N/A"}`}
+                    <span className="mx-2 text-slate-300 dark:text-white/10">•</span>
+                    <a href="https://bolchat.tech/docs#agent-manager" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-rose-500 hover:text-rose-600 font-bold">View Guide <ExternalLink className="w-3 h-3" /></a>
                   </p>
                 </div>
               </div>
@@ -917,6 +932,69 @@ export default function BotManagerPage() {
                         </div>
                       </div>
 
+                      {/* Launcher Text */}
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Launcher Text <span className="text-[9px] text-slate-400 font-normal">(Hidden on mobile)</span></label>
+                        <input
+                          type="text"
+                          value={getWidgetTheme(widget).launcher_text || ""}
+                          onChange={(e) => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), launcher_text: e.target.value } })}
+                          placeholder="e.g. Chat with us"
+                          className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm dark:text-white outline-none focus:ring-2 focus:ring-rose-500/20"
+                        />
+                      </div>
+
+                      {/* Tooltip Text */}
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Tooltip Text</label>
+                        <input
+                          type="text"
+                          value={getWidgetTheme(widget).tooltip_text || ""}
+                          onChange={(e) => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), tooltip_text: e.target.value } })}
+                          placeholder="e.g. Have questions?"
+                          className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm dark:text-white outline-none focus:ring-2 focus:ring-rose-500/20"
+                        />
+                      </div>
+
+                      {/* Launcher Shape */}
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Launcher Shape</label>
+                        <div className="grid grid-cols-5 gap-2">
+                          {([
+                            { id: "circle", label: "Circle" },
+                            { id: "rounded", label: "Rounded" },
+                            { id: "pill", label: "Pill" },
+                            { id: "square", label: "Square" },
+                            { id: "flower", label: "Flower" },
+                          ] as const).map((shape) => (
+                            <button
+                              key={shape.id}
+                              onClick={() => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), launcher_shape: shape.id } })}
+                              className={cn(
+                                "flex flex-col items-center gap-1.5 py-3 rounded-xl text-[10px] font-bold border transition-all cursor-pointer",
+                                getWidgetTheme(widget).launcher_shape === shape.id
+                                  ? "border-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-500"
+                                  : "border-slate-200 dark:border-white/10 text-slate-500 hover:border-slate-300 dark:hover:border-white/20"
+                              )}
+                            >
+                              <div
+                                className={cn(
+                                  "w-8 h-8 flex items-center justify-center transition-colors",
+                                  shape.id === "pill" ? "w-12 h-7 rounded-full" :
+                                  shape.id === "square" ? "w-8 h-8 rounded-sm" :
+                                  shape.id === "rounded" ? "w-8 h-8 rounded-xl" :
+                                  shape.id === "circle" ? "w-8 h-8 rounded-full" : "w-8 h-8",
+                                  getWidgetTheme(widget).launcher_shape === shape.id
+                                    ? "bg-rose-500 text-white" : "bg-slate-200 dark:bg-white/10 text-slate-400"
+                                )}
+                                style={shape.id === "flower" ? { borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%" } : {}}
+                              />
+                              {shape.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       {/* Widget Position */}
                       <div className="space-y-2">
                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Widget Position</label>
@@ -953,6 +1031,106 @@ export default function BotManagerPage() {
                         <div className="flex justify-between">
                           <span className="text-[10px] text-slate-400">Compact (350px)</span>
                           <span className="text-[10px] text-slate-400">Tall (700px)</span>
+                        </div>
+                      </div>
+
+                      {/* ── v4: Modern Features ── */}
+                      <div className="pt-2 border-t border-slate-200 dark:border-white/10">
+                        <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 mb-4">✨ Advanced Features</h4>
+
+                        {/* Teaser Message */}
+                        <div className="space-y-2 mb-5">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Teaser Message</label>
+                          <input
+                            type="text"
+                            value={getWidgetTheme(widget).teaser_text || ""}
+                            onChange={(e) => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), teaser_text: e.target.value } })}
+                            placeholder="e.g. 👋 Need help with pricing?"
+                            className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm dark:text-white outline-none focus:ring-2 focus:ring-rose-500/20"
+                          />
+                          <p className="text-[10px] text-slate-400 ml-1">Speech bubble that slides out near the launcher once per session</p>
+                        </div>
+
+                        {/* Suggested Quick Replies */}
+                        <div className="space-y-2 mb-5">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Quick Replies (optional)</label>
+                          <div className="space-y-2">
+                            {[0, 1, 2].map((idx) => (
+                              <input
+                                key={idx}
+                                type="text"
+                                value={(getWidgetTheme(widget).suggested_replies || [])[idx] || ""}
+                                onChange={(e) => {
+                                  const current = [...(getWidgetTheme(widget).suggested_replies || [])];
+                                  while (current.length <= idx) current.push("");
+                                  current[idx] = e.target.value;
+                                  const filtered = current.filter((v: string) => v.trim() !== "");
+                                  setWidget({ ...widget, theme: { ...getWidgetTheme(widget), suggested_replies: e.target.value.trim() === "" && idx < current.length ? current : filtered.length > 0 ? current : [] } });
+                                }}
+                                onBlur={() => {
+                                  const current = (getWidgetTheme(widget).suggested_replies || []).filter((v: string) => v.trim() !== "");
+                                  setWidget({ ...widget, theme: { ...getWidgetTheme(widget), suggested_replies: current } });
+                                }}
+                                placeholder={`e.g. ${idx === 0 ? "Pricing" : idx === 1 ? "Book a demo" : "Talk to sales"}`}
+                                className="w-full h-10 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm dark:text-white outline-none focus:ring-2 focus:ring-rose-500/20"
+                              />
+                            ))}
+                          </div>
+                          <p className="text-[10px] text-slate-400 ml-1">Clickable pill buttons above the input — leave blank to hide</p>
+                        </div>
+
+                        {/* Toggle Switches */}
+                        <div className="space-y-3 mb-5">
+                          {([
+                            { key: "glass_effect", label: "Glassmorphism", desc: "Frosted glass launcher effect" },
+                            { key: "gradient_enabled", label: "Animated Gradient", desc: "Slowly rotating brand gradient" },
+                            { key: "attention_dot", label: "Attention Dot", desc: "Pulsing notification badge" },
+                          ] as const).map((opt) => (
+                            <div key={opt.key} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-white/3 border border-slate-100 dark:border-white/5">
+                              <div>
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{opt.label}</p>
+                                <p className="text-[10px] text-slate-400">{opt.desc}</p>
+                              </div>
+                              <button
+                                onClick={() => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), [opt.key]: !getWidgetTheme(widget)[opt.key] } })}
+                                className={cn(
+                                  "w-11 h-6 rounded-full transition-colors flex items-center px-0.5 cursor-pointer",
+                                  getWidgetTheme(widget)[opt.key] ? "bg-rose-500" : "bg-slate-300 dark:bg-white/15"
+                                )}
+                              >
+                                <span className={cn(
+                                  "w-5 h-5 rounded-full bg-white shadow transition-transform",
+                                  getWidgetTheme(widget)[opt.key] ? "translate-x-5" : "translate-x-0"
+                                )} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Entrance Animation */}
+                        <div className="space-y-2 mb-5">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Entrance Animation</label>
+                          <div className="grid grid-cols-4 gap-2">
+                            {([
+                              { id: "none", label: "None" },
+                              { id: "slide-up", label: "Slide Up" },
+                              { id: "scale-in", label: "Scale In" },
+                              { id: "bounce-in", label: "Bounce" },
+                            ] as const).map((anim) => (
+                              <button
+                                key={anim.id}
+                                onClick={() => setWidget({ ...widget, theme: { ...getWidgetTheme(widget), entrance_animation: anim.id } })}
+                                className={cn(
+                                  "py-2.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer",
+                                  getWidgetTheme(widget).entrance_animation === anim.id
+                                    ? "border-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-500"
+                                    : "border-slate-200 dark:border-white/10 text-slate-500 hover:border-slate-300"
+                                )}
+                              >
+                                {anim.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
@@ -1285,14 +1463,48 @@ export default function BotManagerPage() {
 
               {/* Launcher button (positioned like real widget) */}
               <div className={cn(
-                "absolute bottom-3 z-10",
+                "absolute bottom-3 z-10 group",
                 widget?.position === "bottom_left" ? "left-3" : "right-3"
               )}>
+                {getWidgetTheme(widget).tooltip_text && (
+                  <div className={cn(
+                    "absolute -top-10 whitespace-nowrap bg-slate-900 dark:bg-slate-800 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none",
+                    widget?.position === "bottom_left" ? "left-0" : "right-0"
+                  )}>
+                    {getWidgetTheme(widget).tooltip_text}
+                  </div>
+                )}
+                {/* Attention dot */}
+                {getWidgetTheme(widget).attention_dot && (
+                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-white dark:border-slate-900 animate-pulse z-20" />
+                )}
                 <div
-                  className="w-11 h-11 rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-                  style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}
+                  className={cn(
+                    "relative shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform",
+                    getWidgetTheme(widget).launcher_shape === "pill" ? "h-10 min-w-[120px] px-4 gap-2 rounded-full" :
+                    getWidgetTheme(widget).launcher_shape === "square" ? "w-11 h-11 rounded-sm" :
+                    getWidgetTheme(widget).launcher_shape === "rounded" ? "w-11 h-11 rounded-xl" :
+                    getWidgetTheme(widget).launcher_shape === "flower" ? "w-11 h-11" :
+                    "w-11 h-11 rounded-full"
+                  )}
+                  style={{
+                    background: getWidgetTheme(widget).gradient_enabled
+                      ? `linear-gradient(135deg, ${brandColor}, color-mix(in srgb, ${brandColor} 55%, #8b5cf6))`
+                      : `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)`,
+                    ...(getWidgetTheme(widget).launcher_shape === "flower" ? { borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%" } : {}),
+                    ...(getWidgetTheme(widget).glass_effect ? {
+                      backdropFilter: "blur(18px) saturate(1.6)",
+                      WebkitBackdropFilter: "blur(18px) saturate(1.6)",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                    } : {}),
+                  }}
                 >
-                  <LauncherIcon iconId={getWidgetTheme(widget).launcher_icon} className="w-5 h-5 text-white" />
+                  <LauncherIcon iconId={getWidgetTheme(widget).launcher_icon} className="w-5 h-5 text-white shrink-0" />
+                  {getWidgetTheme(widget).launcher_shape === "pill" && getWidgetTheme(widget).launcher_text && (
+                    <span className="text-white text-sm font-bold truncate hidden md:inline-block">
+                      {getWidgetTheme(widget).launcher_text}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

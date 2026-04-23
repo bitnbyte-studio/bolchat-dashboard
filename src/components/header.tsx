@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { title: "Knowledge Base", href: "/dashboard/knowledge", icon: BookOpen },
-  { title: "Chatbot Manager", href: "/dashboard/chatbots", icon: Bot },
+  { title: "Agent Manager", href: "/dashboard/chatbots", icon: Bot },
   { title: "Analytics", href: "/dashboard/analytics", icon: LineChart },
   { title: "Lead Capture", href: "/dashboard/leads", icon: UserPlus },
   { title: "Conversations", href: "/dashboard/conversations", icon: MessageSquare },
@@ -24,9 +24,9 @@ function MobileNav() {
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-[#0a0f1e] text-slate-900 border-none">
       <SheetHeader className="p-6 border-b border-slate-200 dark:border-white/5 text-left">
-         <SheetTitle className="flex items-center gap-2">
-           <BolchatLogo size="sm" />
-         </SheetTitle>
+        <SheetTitle className="flex items-center gap-2">
+          <BolchatLogo size="sm" />
+        </SheetTitle>
       </SheetHeader>
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => {
@@ -37,8 +37,8 @@ function MobileNav() {
               href={item.href}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group",
-                isActive 
-                  ? "bg-rose-50 text-rose-500 border-l-[4px] border-rose-500" 
+                isActive
+                  ? "bg-rose-50 text-rose-500 border-l-[4px] border-rose-500"
                   : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
               )}
             >
@@ -54,7 +54,7 @@ function MobileNav() {
 
 function getPageMetadata(pathname: string) {
   if (pathname.includes("knowledge")) return { title: "Knowledge Base", subtitle: "Documents Central" };
-  if (pathname.includes("chatbots")) return { title: "Chatbot Manager", subtitle: "Agent Configuration" };
+  if (pathname.includes("chatbots")) return { title: "Agent Manager", subtitle: "Agent Configuration" };
   if (pathname.includes("analytics")) return { title: "Analytics", subtitle: "Performance Metrics" };
   if (pathname.includes("leads")) return { title: "Lead Capture", subtitle: "Visitor Intelligence" };
   if (pathname.includes("conversations")) return { title: "Conversations", subtitle: "Inbox & Live Chat" };
@@ -73,18 +73,18 @@ export function Header() {
             <Menu className="w-5 h-5" />
           </SheetTrigger>
           <SheetContent side="left" className="p-0 border-r border-slate-200 dark:border-white/10 w-72 bg-white dark:bg-[#0a0f1e]">
-             <MobileNav />
+            <MobileNav />
           </SheetContent>
         </Sheet>
-        
+
         <div className="hidden sm:block">
           <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">{title}</h2>
           <div className="flex items-center gap-2 mt-0.5">
-             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{subtitle}</span>
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{subtitle}</span>
           </div>
         </div>
       </div>
-      
+
       <div className="flex items-center gap-3 md:gap-6">
         {pathname.includes("leads") && (
           <button className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-bold text-xs md:text-sm shadow-lg shadow-rose-500/20 hover:scale-105 transition-all cursor-pointer">
@@ -107,22 +107,22 @@ export function Header() {
             <div className="h-8 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
           </div>
         )}
-        
+
         <div className="flex items-center gap-2 md:gap-3">
           <ThemeToggle />
-          
+
           <button className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center relative hover:text-rose-500 text-slate-500 dark:text-slate-400 transition-colors">
             <Bell className="w-5 h-5" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full"></span>
           </button>
-          
+
           <div className="h-8 w-[1px] bg-slate-200 dark:bg-white/10 mx-1 hidden sm:block"></div>
-          
+
           <button className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-rose-300 dark:hover:border-rose-500/50 transition-all text-left">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-200 ml-1 hidden sm:block">Bolchat Admin</span>
             <Avatar className="w-7 h-7 rounded-lg object-cover">
-               <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Profile" />
-               <AvatarFallback className="bg-rose-500/20 text-rose-500 font-bold rounded-lg text-[10px]">BT</AvatarFallback>
+              <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Profile" />
+              <AvatarFallback className="bg-rose-500/20 text-rose-500 font-bold rounded-lg text-[10px]">BT</AvatarFallback>
             </Avatar>
           </button>
         </div>

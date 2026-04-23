@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
+import {
   Key,
   CheckCircle2, Copy, Trash2, Plus, Loader2,
   Code
 } from "lucide-react";
-import { 
+import {
   getApiKeysAction, createApiKeyAction, revokeApiKeyAction,
 } from "@/app/actions/settings";
 import { cn } from "@/lib/utils";
@@ -95,7 +95,7 @@ export default function SettingsPage() {
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white font-cabinet">Account API Keys</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">Keys belong to your account and can be used with any published agent in this workspace.</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowKeyModal(true)}
                 className="flex items-center gap-2 px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-rose-500/20"
               >
@@ -130,7 +130,7 @@ export default function SettingsPage() {
                     <div className="px-3 py-1 bg-slate-200 dark:bg-white/10 rounded-lg font-mono text-[11px] text-slate-600 dark:text-slate-400">
                       ••••••••••••••••
                     </div>
-                    <button 
+                    <button
                       onClick={() => setRevokeTarget(key.id)}
                       className="p-2 text-slate-400 hover:text-red-500 transition-colors"
                       title="Revoke Key"
@@ -153,12 +153,12 @@ export default function SettingsPage() {
                 </div>
                 <h3 className="text-xl font-bold text-white font-cabinet">Integration Guide</h3>
               </div>
-              <p className="text-slate-400 text-sm mb-6 max-w-2xl">Copy this script into the <code>&lt;head&gt;</code> of your website to enable the BolChat bubble. For a personalized embed snippet with your actual API key and agent ID, visit the <strong className="text-white">Deploy tab</strong> in the Chatbot Manager.</p>
+              <p className="text-slate-400 text-sm mb-6 max-w-2xl">Copy this script into the <code>&lt;head&gt;</code> of your website to enable the BolChat bubble. For a personalized embed snippet with your actual API key and agent ID, visit the <strong className="text-white">Deploy tab</strong> in the Agent Manager.</p>
               <div className="bg-black/40 border border-white/5 rounded-2xl p-6 relative group">
                 <pre className="text-xs text-rose-300 font-mono overflow-x-auto">
-{integrationSnippet}
+                  {integrationSnippet}
                 </pre>
-                <button 
+                <button
                   onClick={() => copyToClipboard(integrationSnippet)}
                   className="absolute top-4 right-4 p-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100"
                 >
@@ -183,64 +183,64 @@ export default function SettingsPage() {
       {/* API Key Generation Modal */}
       {showKeyModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="w-full max-w-md bg-white dark:bg-[#1a2135] rounded-[2rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10 p-8 space-y-6">
-              <div className="flex justify-between items-center">
-                 <h3 className="text-xl font-bold dark:text-white font-cabinet">Generate Key</h3>
-                 <button onClick={() => {setShowKeyModal(false); setGeneratedKey(null);}} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">✕</button>
-              </div>
+          <div className="w-full max-w-md bg-white dark:bg-[#1a2135] rounded-[2rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10 p-8 space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-bold dark:text-white font-cabinet">Generate Key</h3>
+              <button onClick={() => { setShowKeyModal(false); setGeneratedKey(null); }} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">✕</button>
+            </div>
 
-              {!generatedKey ? (
-                <div className="space-y-6">
-                   <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4">
-                     <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                       You will see the full API key only once. Copy it before closing this window.
-                     </p>
-                   </div>
-                   <div className="space-y-2">
-                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Key Name</label>
-                     <input 
-                        type="text" 
-                        placeholder="e.g. Production Widget"
-                        value={newKeyName}
-                        onChange={(e) => setNewKeyName(e.target.value)}
-                        className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm dark:text-white outline-none focus:ring-2 focus:ring-rose-500/20"
-                     />
-                   </div>
-                   <button 
-                      onClick={handleCreateKey}
-                      disabled={keyLoading}
-                      className="w-full py-4 bg-rose-500 text-white rounded-2xl font-bold shadow-xl shadow-rose-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-                   >
-                      {keyLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : "Generate API Key"}
-                   </button>
+            {!generatedKey ? (
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4">
+                  <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                    You will see the full API key only once. Copy it before closing this window.
+                  </p>
                 </div>
-              ) : (
-                <div className="space-y-4 animate-in zoom-in-95 duration-300">
-                   <div className="p-4 bg-green-50 dark:bg-green-500/10 border border-green-100 dark:border-green-500/20 rounded-2xl flex items-center gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      <p className="text-xs font-bold text-green-700 dark:text-green-400">Key generated successfully!</p>
-                   </div>
-                   <p className="text-xs text-slate-500">Copy this key now. For security reasons, <strong>it will not be shown again.</strong></p>
-                   <div className="p-4 bg-slate-900 rounded-xl font-mono text-sm text-rose-300 break-all select-all flex justify-between items-center gap-4">
-                      <span>{generatedKey}</span>
-                      <button onClick={() => copyToClipboard(generatedKey)} className="shrink-0 text-white/40 hover:text-white transition-colors">
-                        <Copy className="w-4 h-4" />
-                      </button>
-                   </div>
-                   <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                        Existing keys are displayed only by prefix. If you close this window without copying the full key, create a new key.
-                      </p>
-                   </div>
-                   <button 
-                      onClick={() => {setShowKeyModal(false); setGeneratedKey(null);}}
-                      className="w-full py-3 bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white rounded-xl font-bold text-sm"
-                   >
-                      Got it
-                   </button>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Key Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Production Widget"
+                    value={newKeyName}
+                    onChange={(e) => setNewKeyName(e.target.value)}
+                    className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm dark:text-white outline-none focus:ring-2 focus:ring-rose-500/20"
+                  />
                 </div>
-              )}
-           </div>
+                <button
+                  onClick={handleCreateKey}
+                  disabled={keyLoading}
+                  className="w-full py-4 bg-rose-500 text-white rounded-2xl font-bold shadow-xl shadow-rose-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  {keyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generate API Key"}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4 animate-in zoom-in-95 duration-300">
+                <div className="p-4 bg-green-50 dark:bg-green-500/10 border border-green-100 dark:border-green-500/20 rounded-2xl flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <p className="text-xs font-bold text-green-700 dark:text-green-400">Key generated successfully!</p>
+                </div>
+                <p className="text-xs text-slate-500">Copy this key now. For security reasons, <strong>it will not be shown again.</strong></p>
+                <div className="p-4 bg-slate-900 rounded-xl font-mono text-sm text-rose-300 break-all select-all flex justify-between items-center gap-4">
+                  <span>{generatedKey}</span>
+                  <button onClick={() => copyToClipboard(generatedKey)} className="shrink-0 text-white/40 hover:text-white transition-colors">
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Existing keys are displayed only by prefix. If you close this window without copying the full key, create a new key.
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setShowKeyModal(false); setGeneratedKey(null); }}
+                  className="w-full py-3 bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white rounded-xl font-bold text-sm"
+                >
+                  Got it
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

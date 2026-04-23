@@ -10,7 +10,9 @@ import {
 import { 
   getOrganizationsAction, 
   provisionCompanyAction, 
-  sendWelcomeEmailAction 
+  sendWelcomeEmailAction,
+  deleteCompanyAction,
+  getCompanyUsageAction
 } from "@/app/actions/admin";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
@@ -27,6 +29,16 @@ export default function SuperAdminPage() {
   const [provisionedData, setProvisionedData] = useState<any>(null);
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+
+  // Delete State
+  const [orgToDelete, setOrgToDelete] = useState<any>(null);
+  const [deleteInput, setDeleteInput] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Usage State
+  const [usageOrg, setUsageOrg] = useState<any>(null);
+  const [usageData, setUsageData] = useState<any>(null);
+  const [usageLoading, setUsageLoading] = useState(false);
 
   useEffect(() => {
     fetchOrganizations();
@@ -69,6 +81,40 @@ export default function SuperAdminPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
+
+  async function handleDeleteCompany() {
+    if (!orgToDelete) return;
+    if (deleteInput.trim().toLowerCase() !== orgToDelete.slug.toLowerCase()) {
+      toast("Slug does not match", "error");
+      return;
+    }
+    
+    setDeleteLoading(true);
+    const targetId = orgToDelete.id;
+    const res = await deleteCompanyAction(targetId);
+    if (res.success) {
+      toast("Company successfully deleted", "success");
+      setOrganizations((prev) => prev.filter((o) => o.id !== targetId));
+      setOrgToDelete(null);
+      setDeleteInput("");
+    } else {
+      toast(res.error || "Failed to delete company", "error");
+    }
+    setDeleteLoading(false);
+  }
+
+  async function handleViewUsage(org: any) {
+    setUsageOrg(org);
+    setUsageLoading(true);
+    const res = await getCompanyUsageAction(org.id);
+    if (res.success) {
+      setUsageData(res.data);
+    } else {
+      toast("Failed to load usage data", "error");
+      setUsageOrg(null);
+    }
+    setUsageLoading(false);
+  }
 
   const stats = [
     { title: "Total Organizations", value: organizations.length, icon: Building2, color: "indigo" },
@@ -155,7 +201,7 @@ export default function SuperAdminPage() {
                        </tr>
                      ))
                    ) : organizations.map((org) => (
-                     <tr key={org.id} className="group hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                     <tr key={org.id} onClick={() => handleViewUsage(org)} className="group cursor-pointer hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-indigo-100/50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs">
@@ -174,11 +220,11 @@ export default function SuperAdminPage() {
                         <td className="px-6 py-4 text-center text-sm font-bold text-slate-700 dark:text-slate-300">{org.stats?.users || 0}</td>
                         <td className="px-6 py-4 text-center text-sm font-bold text-slate-700 dark:text-slate-300">{org.stats?.documents || 0}</td>
                         <td className="px-6 py-4 text-right">
-                           <div className="flex justify-end gap-1.5">
-                             <button className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg text-slate-400 hover:text-indigo-500 transition-all shadow-sm cursor-pointer">
+                           <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                             <button onClick={() => handleViewUsage(org)} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg text-slate-400 hover:text-indigo-500 transition-all shadow-sm cursor-pointer">
                                 <ExternalLink className="w-3.5 h-3.5" />
                              </button>
-                             <button className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg text-slate-400 hover:text-rose-500 transition-all shadow-sm cursor-pointer">
+                             <button onClick={() => setOrgToDelete(org)} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg text-slate-400 hover:text-rose-500 transition-all shadow-sm cursor-pointer">
                                 <Trash2 className="w-3.5 h-3.5" />
                              </button>
                            </div>
@@ -319,6 +365,98 @@ export default function SuperAdminPage() {
                       </div>
                    </div>
                 </div>
+              )}
+           </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {orgToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="w-full max-w-md bg-white dark:bg-[#1a2135] rounded-3xl shadow-2xl overflow-hidden border border-rose-500/30 p-8 space-y-6">
+              <div className="flex justify-between items-start">
+                 <div>
+                    <h3 className="text-xl font-bold text-rose-500 font-cabinet">Delete Organization</h3>
+                    <p className="text-xs text-slate-500 mt-1">This action cannot be undone.</p>
+                 </div>
+                 <button 
+                  onClick={() => {setOrgToDelete(null); setDeleteInput("");}} 
+                  className="w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-white/5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                 >✕</button>
+              </div>
+
+              <div className="p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl">
+                 <p className="text-sm font-bold text-rose-700 dark:text-rose-400">Warning!</p>
+                 <p className="text-[11px] text-rose-600 dark:text-rose-400/80 mt-1">
+                   You are about to permanently delete <strong>{orgToDelete.name}</strong>. All associated users, agents, documents, vectors, and chat history will be completely wiped from the database and Qdrant.
+                 </p>
+              </div>
+
+              <div className="space-y-2">
+                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Type <span className="text-rose-500">{orgToDelete.slug}</span> to confirm</label>
+                 <input 
+                    type="text" 
+                    value={deleteInput}
+                    onChange={(e) => setDeleteInput(e.target.value)}
+                    className="w-full h-11 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm font-mono dark:text-white outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+                 />
+              </div>
+
+              <button 
+                 onClick={handleDeleteCompany}
+                 disabled={deleteLoading || deleteInput.trim().toLowerCase() !== orgToDelete.slug.toLowerCase()}
+                 className="w-full py-3 bg-rose-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-rose-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-xl shadow-rose-500/20"
+              >
+                 {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Trash2 className="w-4 h-4" />}
+                 Force Delete Everything
+              </button>
+           </div>
+        </div>
+      )}
+
+      {/* Usage Insights Modal */}
+      {usageOrg && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="w-full max-w-lg bg-white dark:bg-[#1a2135] rounded-3xl shadow-2xl overflow-hidden border border-indigo-500/30 p-8 space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+              
+              <div className="flex justify-between items-start relative z-10">
+                 <div>
+                    <h3 className="text-2xl font-bold dark:text-white font-cabinet">{usageOrg.name}</h3>
+                    <p className="text-xs text-indigo-500 uppercase tracking-widest font-bold mt-1">Usage Analytics</p>
+                 </div>
+                 <button 
+                  onClick={() => setUsageOrg(null)} 
+                  className="w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-white/5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                 >✕</button>
+              </div>
+
+              {usageLoading ? (
+                 <div className="py-20 flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                    <p className="text-xs font-bold text-slate-400 animate-pulse">Calculating telemetry...</p>
+                 </div>
+              ) : usageData ? (
+                 <div className="grid grid-cols-2 gap-4 relative z-10">
+                    <div className="p-5 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl">
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Chat Sessions</p>
+                       <h4 className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{usageData.conversations}</h4>
+                    </div>
+                    <div className="p-5 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl">
+                       <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Messages Processed</p>
+                       <h4 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{usageData.messages}</h4>
+                    </div>
+                    <div className="p-5 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl">
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Chatbots</p>
+                       <h4 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{usageData.agents}</h4>
+                    </div>
+                    <div className="p-5 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl">
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Document Chunks</p>
+                       <h4 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{usageData.documents}</h4>
+                    </div>
+                 </div>
+              ) : (
+                 <div className="py-10 text-center text-rose-500 text-sm font-bold">Failed to load analytics</div>
               )}
            </div>
         </div>

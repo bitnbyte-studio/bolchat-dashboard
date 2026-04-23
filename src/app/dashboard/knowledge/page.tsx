@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   UploadCloud, Trash2, FileText, 
-  Loader2, ChevronDown, CheckCircle2, AlertCircle, X, File
+  Loader2, ChevronDown, CheckCircle2, AlertCircle, X, File, ExternalLink
 } from "lucide-react";
 import { getKBsAction, getDocumentsAction, deleteDocumentAction, createKBAction } from "@/app/actions/knowledge";
 import { cn } from "@/lib/utils";
@@ -283,7 +283,7 @@ export default function KnowledgeBasePage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
           <div>
              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Upload PDF Documents</h3>
-             <p className="text-xs text-slate-500 dark:text-slate-400">Train your AI agent by uploading PDF knowledge sources.</p>
+             <p className="text-xs text-slate-500 dark:text-slate-400">Train your AI agent by uploading PDF knowledge sources. <a href="https://bolchat.tech/docs#knowledge-base" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-rose-500 hover:text-rose-600 font-bold">View Guide <ExternalLink className="w-3 h-3" /></a></p>
           </div>
           {selectedKb && (
             <span className="px-3 py-1 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-bold rounded-full uppercase tracking-wider">

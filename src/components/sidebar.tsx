@@ -18,7 +18,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Knowledge Base", href: "/dashboard/knowledge", icon: BookOpen },
-  { title: "Chatbot Manager", href: "/dashboard/chatbots", icon: Bot },
+  { title: "Agent Manager", href: "/dashboard/chatbots", icon: Bot },
   { title: "Analytics", href: "/dashboard/analytics", icon: LineChart },
   { title: "Lead Capture", href: "/dashboard/leads", icon: UserPlus },
   { title: "Conversations", href: "/dashboard/conversations", icon: MessageSquare },
@@ -67,8 +67,8 @@ export function Sidebar() {
               href={item.href}
               className={cn(
                 "flex items-center h-10 gap-3 px-3 rounded-lg transition-all relative overflow-hidden",
-                isActive 
-                  ? "bg-rose-50 dark:bg-rose-500/10 border-l-[3px] border-rose-500 text-rose-500" 
+                isActive
+                  ? "bg-rose-50 dark:bg-rose-500/10 border-l-[3px] border-rose-500 text-rose-500"
                   : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white border-l-[3px] border-transparent"
               )}
             >

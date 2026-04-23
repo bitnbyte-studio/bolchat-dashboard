@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-cabinet tracking-tight">Analytics</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-xs sm:text-sm">Deep dive into your chatbot performance and engagement.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-xs sm:text-sm">Deep dive into your chatbot performance and engagement. <a href="https://bolchat.tech/docs#analytics" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-rose-500 hover:text-rose-600 font-bold">View Guide →</a></p>
         </div>
         <div className="flex gap-2">
           {RANGE_OPTIONS.map((opt) => (

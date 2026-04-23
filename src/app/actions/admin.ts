@@ -70,3 +70,41 @@ export async function sendWelcomeEmailAction(userId: string, tempPassword: strin
     return { success: false, error: error.message };
   }
 }
+
+export async function deleteCompanyAction(orgId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${baseUrl}/api/v1/admin/organizations/${orgId}`, {
+      method: "DELETE",
+      headers,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Failed to delete company");
+
+    revalidatePath("/dashboard/superadmin");
+    return { success: true, message: data.message };
+  } catch (error: any) {
+    console.error("deleteCompanyAction error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getCompanyUsageAction(orgId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${baseUrl}/api/v1/admin/organizations/${orgId}/usage`, {
+      method: "GET",
+      headers,
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Failed to fetch company usage");
+
+    return { success: true, data: data.data };
+  } catch (error: any) {
+    console.error("getCompanyUsageAction error:", error);
+    return { success: false, error: error.message };
+  }
+}
