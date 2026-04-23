@@ -147,6 +147,15 @@
   html {
     @apply font-sans;
   }
+
+  /* Auth page input refinements */
+  input::placeholder {
+    color: #1e3a5f;
+    opacity: 1;
+  }
+  input {
+    caret-color: #f43f5e;
+  }
   
   button,
   [role="button"] {

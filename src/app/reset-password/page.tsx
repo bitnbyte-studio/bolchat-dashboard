@@ -1,135 +1,302 @@
 "use client";
 
 import React, { useState, useActionState, useEffect } from 'react';
-import { Lock, ArrowRight, ShieldCheck, Eye, EyeOff, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { Lock, Eye, EyeOff, Loader2, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { forceResetPasswordAction } from "@/app/actions/auth";
 import { useFormStatus } from 'react-dom';
+import { BolchatLogo } from "@/components/BolchatLogo";
+
+/* ── Password strength helper ── */
+function getStrength(pw: string): { score: number; label: string; color: string } {
+  if (!pw) return { score: 0, label: '', color: '#1e293b' };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 1) return { score, label: 'Weak', color: '#ef4444' };
+  if (score <= 3) return { score, label: 'Fair', color: '#f59e0b' };
+  if (score === 4) return { score, label: 'Good', color: '#3b82f6' };
+  return { score, label: 'Strong', color: '#10b981' };
+}
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button 
-      type="submit" 
+    <button
+      type="submit"
       disabled={pending}
-      className="w-full h-16 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-2xl font-bold text-lg shadow-lg shadow-rose-500/20 hover:scale-[1.02] hover:shadow-rose-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
+      className="group relative w-full h-11 overflow-hidden rounded-xl font-semibold text-sm tracking-wide transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
+      style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' }}
     >
-      {pending ? (
-        <>
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span>Updating...</span>
-        </>
-      ) : (
-        <>
-          <span>Update Password & Continue</span>
-          <ArrowRight className="w-5 h-5" />
-        </>
-      )}
+      <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
+      <span className="relative flex items-center justify-center gap-2 text-white">
+        {pending ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Updating…</span>
+          </>
+        ) : (
+          <span>Set New Password</span>
+        )}
+      </span>
     </button>
   );
 }
 
 export default function ResetPasswordPage() {
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
   const router = useRouter();
-  
   const [state, formAction] = useActionState(forceResetPasswordAction, null);
+  const strength = getStrength(newPw);
+
+  /* Requirements checklist */
+  const reqs = [
+    { label: 'At least 8 characters', met: newPw.length >= 8 },
+    { label: 'One uppercase letter', met: /[A-Z]/.test(newPw) },
+    { label: 'One number', met: /[0-9]/.test(newPw) },
+    { label: 'Passwords match', met: newPw.length > 0 && newPw === confirmPw },
+  ];
 
   useEffect(() => {
-    if (state?.success && state.redirect) {
-      router.push(state.redirect);
-    }
+    if (state?.success && state.redirect) router.push(state.redirect);
   }, [state, router]);
 
-  return (
-    <div className="min-h-screen bg-[#0a0f1e] flex flex-col relative overflow-hidden px-6 lg:px-0 font-satoshi">
-      {/* Background Orbs */}
-      <div className="absolute rounded-full filter blur-[120px] pointer-events-none z-0 opacity-40 bg-rose-600 w-[500px] h-[500px] -top-40 -left-40 animate-float"></div>
-      <div className="absolute rounded-full filter blur-[120px] pointer-events-none z-0 opacity-40 bg-pink-600 w-[600px] h-[600px] -bottom-40 -right-40 animate-float" style={{ animationDelay: '-5s' }}></div>
-      <div className="absolute rounded-full filter blur-[120px] pointer-events-none z-0 opacity-40 bg-indigo-600/30 w-[400px] h-[400px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse-slow"></div>
+  const inputBase: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.07)',
+    color: '#f1f5f9',
+  };
 
-      <div className="flex-1 flex flex-col justify-center w-full max-w-md mx-auto py-12 lg:py-16">
-        <main className="w-full relative z-10 animate-fade-in">
-          <div className="bg-white/[0.03] backdrop-blur-[20px] border border-white/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] p-10 rounded-[2.5rem] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 blur-3xl rounded-full"></div>
-            
-            <div className="mb-10 text-center lg:text-left">
-              <h2 className="text-2xl font-bold text-white mb-2 font-cabinet">Update Password</h2>
-              <p className="text-rose-400 font-medium text-sm mb-2">Security Policy Requirement</p>
-              <p className="text-slate-400 text-sm">
-                For security reasons, you are required to change your password on your first login to the C-Panel.
-              </p>
+  function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
+    e.currentTarget.style.borderColor = 'rgba(244,63,94,0.5)';
+    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(244,63,94,0.08)';
+  }
+  function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
+    e.currentTarget.style.boxShadow = 'none';
+  }
+
+  return (
+    <div
+      className="min-h-screen flex flex-col justify-center items-center px-6 font-satoshi relative"
+      style={{ background: '#080b14' }}
+    >
+      {/* Very faint radial */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 55% 50% at 50% 55%, rgba(244,63,94,0.05) 0%, transparent 100%)',
+        }}
+      />
+
+      {/* Subtle grid */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }}
+      />
+
+      <div className="w-full max-w-[420px] relative z-10">
+
+        {/* Logo */}
+        <div className="flex justify-center mb-10">
+          <BolchatLogo size="md" />
+        </div>
+
+        {/* Security badge */}
+        <div
+          className="flex items-center gap-2.5 px-4 py-3 rounded-xl mb-8"
+          style={{
+            background: 'rgba(244,63,94,0.06)',
+            border: '1px solid rgba(244,63,94,0.14)',
+          }}
+        >
+          <ShieldCheck className="w-4 h-4 flex-shrink-0" style={{ color: '#f43f5e' }} />
+          <div>
+            <p className="text-xs font-semibold" style={{ color: '#f43f5e' }}>
+              First Login — Password Update Required
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: '#64748b' }}>
+              Your organisation requires you to set a personal password.
+            </p>
+          </div>
+        </div>
+
+        {/* Heading */}
+        <div className="mb-8">
+          <h1
+            className="font-cabinet font-bold mb-1"
+            style={{ fontSize: '1.5rem', color: '#f1f5f9', letterSpacing: '-0.02em' }}
+          >
+            Set your password
+          </h1>
+          <p className="text-sm" style={{ color: '#475569' }}>
+            Choose something strong. You'll use this every time you sign in.
+          </p>
+        </div>
+
+        {/* Error */}
+        {state?.error && (
+          <div
+            className="flex items-start gap-3 p-3.5 rounded-xl mb-5 text-sm"
+            style={{
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.18)',
+              color: '#fca5a5',
+            }}
+          >
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>{state.error}</span>
+          </div>
+        )}
+
+        <form action={formAction} className="space-y-4">
+
+          {/* New Password */}
+          <div>
+            <label
+              className="block text-xs font-semibold uppercase tracking-widest mb-2"
+              style={{ color: '#475569', letterSpacing: '0.12em' }}
+            >
+              New Password
+            </label>
+            <div className="relative">
+              <Lock
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                style={{ color: '#334155' }}
+              />
+              <input
+                name="newPassword"
+                type={showNew ? 'text' : 'password'}
+                required
+                pattern=".*[A-Z].*"
+                title="Password must contain at least one uppercase letter"
+                placeholder="••••••••"
+                value={newPw}
+                onChange={e => setNewPw(e.target.value)}
+                className="w-full h-11 pl-10 pr-10 text-sm rounded-xl outline-none transition-all duration-200"
+                style={inputBase}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowNew(v => !v)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
+                style={{ color: '#334155' }}
+              >
+                {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
 
-            <form className="space-y-6" action={formAction}>
-              {state?.error && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-medium animate-fade-in flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 shrink-0" />
-                  <span>{state.error}</span>
+            {/* Strength bar */}
+            {newPw && (
+              <div className="mt-2.5">
+                <div className="flex gap-1 mb-1.5">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div
+                      key={i}
+                      className="flex-1 h-[3px] rounded-full transition-all duration-400"
+                      style={{
+                        background: i <= strength.score ? strength.color : 'rgba(255,255,255,0.07)',
+                      }}
+                    />
+                  ))}
                 </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">New Password</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-500 group-focus-within:text-rose-500 transition-colors">
-                    <Lock className="w-5 h-5" />
-                  </div>
-                  <input 
-                    name="newPassword"
-                    type={showNewPassword ? "text" : "password"}
-                    required
-                    pattern=".*[A-Z].*"
-                    title="Password must contain at least one uppercase letter"
-                    placeholder="••••••••" 
-                    className="w-full h-14 pl-14 pr-12 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-600 outline-none transition-all focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
-                  />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute inset-y-0 right-0 pr-5 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
+                <p className="text-[11px] font-semibold" style={{ color: strength.color }}>
+                  {strength.label}
+                </p>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Confirm New Password</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-500 group-focus-within:text-rose-500 transition-colors">
-                    <Lock className="w-5 h-5" />
-                  </div>
-                  <input 
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    required
-                    pattern=".*[A-Z].*"
-                    title="Password must contain at least one uppercase letter"
-                    placeholder="••••••••" 
-                    className="w-full h-14 pl-14 pr-12 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-600 outline-none transition-all focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10"
-                  />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-5 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <SubmitButton />
-            </form>
+            )}
           </div>
-        </main>
-      </div>
 
-      <footer className="w-full text-center z-10 mt-auto pb-8">
-        <p className="mt-6 text-[10px] text-slate-600 font-medium tracking-wider">© 2024 BOLCHAT AI. ALL RIGHTS RESERVED.</p>
-      </footer>
+          {/* Confirm Password */}
+          <div>
+            <label
+              className="block text-xs font-semibold uppercase tracking-widest mb-2"
+              style={{ color: '#475569', letterSpacing: '0.12em' }}
+            >
+              Confirm Password
+            </label>
+            <div className="relative">
+              <Lock
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                style={{ color: '#334155' }}
+              />
+              <input
+                name="confirmPassword"
+                type={showConfirm ? 'text' : 'password'}
+                required
+                pattern=".*[A-Z].*"
+                title="Password must contain at least one uppercase letter"
+                placeholder="••••••••"
+                value={confirmPw}
+                onChange={e => setConfirmPw(e.target.value)}
+                className="w-full h-11 pl-10 pr-10 text-sm rounded-xl outline-none transition-all duration-200"
+                style={{
+                  ...inputBase,
+                  borderColor:
+                    confirmPw && newPw !== confirmPw
+                      ? 'rgba(239,68,68,0.5)'
+                      : confirmPw && newPw === confirmPw
+                        ? 'rgba(16,185,129,0.4)'
+                        : 'rgba(255,255,255,0.07)',
+                }}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowConfirm(v => !v)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
+                style={{ color: '#334155' }}
+              >
+                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Requirements checklist */}
+          <div
+            className="p-4 rounded-xl space-y-2"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
+          >
+            {reqs.map((r, i) => (
+              <div key={i} className="flex items-center gap-2.5">
+                <CheckCircle2
+                  className="w-3.5 h-3.5 flex-shrink-0 transition-colors duration-300"
+                  style={{ color: r.met ? '#10b981' : '#1e293b' }}
+                />
+                <span
+                  className="text-xs transition-colors duration-300"
+                  style={{ color: r.met ? '#94a3b8' : '#334155' }}
+                >
+                  {r.label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-1">
+            <SubmitButton />
+          </div>
+        </form>
+
+        <p className="text-center mt-10 text-[10px]" style={{ color: '#1e293b' }}>
+          © 2026 BolChat — All rights reserved
+        </p>
+      </div>
     </div>
   );
 }
