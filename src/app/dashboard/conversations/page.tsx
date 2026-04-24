@@ -249,27 +249,8 @@ export default function ConversationsPage() {
              </div>
           ) : (
             activeChatDetail.messages?.map((msg: any) => (
-              <div key={msg.id} className={cn("flex gap-2 sm:gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
-                {msg.role !== "user" && (
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-rose-500/20">
-                    <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </div>
-                )}
+              <div key={msg.id} className={cn("flex gap-2 sm:gap-3", msg.role === "user" ? "justify-start" : "justify-end")}>
                 
-                <div className={cn("max-w-[85%] sm:max-w-[75%] space-y-1.5", msg.role === "user" && "text-right")}>
-                  <div className={cn(
-                    "p-3 text-[13px] leading-relaxed rounded-xl shadow-sm",
-                    msg.role === "user" 
-                      ? "bg-rose-100 dark:bg-gradient-to-tr dark:from-rose-500 dark:to-pink-500 text-rose-900 dark:text-white rounded-tr-none text-left"
-                      : "bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-tl-none"
-                  )}>
-                    {msg.content}
-                  </div>
-                  <p className="text-[9px] font-bold text-slate-500 dark:text-slate-600 uppercase">
-                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.role === "user" ? (activeChatDetail.metadata?.user_name || "User") : "BolChat AI"}
-                  </p>
-                </div>
-
                 {msg.role === "user" && (
                    <div className={cn(
                     "w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-[10px] flex-shrink-0",
@@ -279,6 +260,26 @@ export default function ConversationsPage() {
                     getAvatarColor(activeChatDetail.id) === "teal" && "bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-500",
                   )}>
                     {getInitials(activeChatDetail.metadata?.user_name || "User")}
+                  </div>
+                )}
+                
+                <div className={cn("max-w-[85%] sm:max-w-[75%] space-y-1.5", msg.role !== "user" && "text-right")}>
+                  <div className={cn(
+                    "p-3 text-[13px] leading-relaxed rounded-xl shadow-sm text-left",
+                    msg.role !== "user" 
+                      ? "bg-rose-100 dark:bg-gradient-to-tr dark:from-rose-500 dark:to-pink-500 text-rose-900 dark:text-white rounded-tr-none"
+                      : "bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-tl-none"
+                  )}>
+                    {msg.content}
+                  </div>
+                  <p className="text-[9px] font-bold text-slate-500 dark:text-slate-600 uppercase">
+                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.role === "user" ? (activeChatDetail.metadata?.user_name || "User") : "BolChat AI"}
+                  </p>
+                </div>
+
+                {msg.role !== "user" && (
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-rose-500/20">
+                    <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                 )}
               </div>
