@@ -27,6 +27,10 @@ type AgentSettings = {
   temperature?: number;
   top_k?: number;
   language?: string;
+  lead_capture_enabled?: boolean;
+  lead_capture_mode?: "off" | "passive" | "smart" | "aggressive";
+  fallback_email?: string;
+  fallback_phone?: string;
 };
 
 const DEFAULT_SETTINGS: AgentSettings = {
@@ -35,6 +39,8 @@ const DEFAULT_SETTINGS: AgentSettings = {
   temperature: 0.4,
   top_k: 5,
   language: "en",
+  lead_capture_enabled: false,
+  lead_capture_mode: "smart",
 };
 
 const LANGUAGES = [
@@ -785,15 +791,136 @@ export default function BotManagerPage() {
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/20 flex items-start gap-4">
-                    <Info className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                    <div>
-                      <h5 className="text-sm font-bold text-rose-900 dark:text-white">Tip</h5>
-                      <p className="text-xs text-rose-700 dark:text-slate-400 mt-0.5 leading-relaxed">
-                        The system prompt is the most powerful knob. Use it to control tone, language, and which topics the agent handles.
-                      </p>
+                  {/* ─── Fallback Support Contact ─── */}
+                  <div className="pt-2">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Fallback Support Contact</h4>
+                    <p className="text-xs text-slate-500 mb-4">If the AI service experiences high demand or downtime, the chat widget will apologize and display these contact details so visitors can still reach out to you.</p>
+                    <div className="grid md:grid-cols-2 gap-8">
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Support Email</label>
+                        <input
+                          type="email"
+                          value={agentSettings().fallback_email || ""}
+                          onChange={(e) => updateSettings({ fallback_email: e.target.value })}
+                          placeholder="e.g. support@yourcompany.com"
+                          className="w-full h-10 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Support Phone</label>
+                        <input
+                          type="text"
+                          value={agentSettings().fallback_phone || ""}
+                          onChange={(e) => updateSettings({ fallback_phone: e.target.value })}
+                          placeholder="e.g. +1-800-555-0199"
+                          className="w-full h-10 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white focus:border-rose-500 focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 transition-all outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
+
+                {/* ─── Lead Capture Settings ─── */}
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Lead Capture</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">Automatically capture leads from visitor conversations with zero extra AI cost.</p>
+                    </div>
+                    {/* Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => updateSettings({ lead_capture_enabled: !agentSettings().lead_capture_enabled })}
+                      className={cn(
+                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none",
+                        agentSettings().lead_capture_enabled ? "bg-rose-500" : "bg-slate-200 dark:bg-white/10"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-200",
+                          agentSettings().lead_capture_enabled ? "translate-x-5" : "translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </div>
+
+                  {agentSettings().lead_capture_enabled && (
+                    <div className="space-y-4 pl-0">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Capture Mode</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {([
+                            {
+                              id: "passive",
+                              label: "Passive",
+                              desc: "Only capture what visitors volunteer. No proactive ask.",
+                              icon: "🤫",
+                            },
+                            {
+                              id: "smart",
+                              label: "Smart",
+                              desc: "Ask once after high-intent signals like pricing or demo.",
+                              icon: "🎯",
+                            },
+                            {
+                              id: "aggressive",
+                              label: "Proactive",
+                              desc: "Ask for contact info after the first substantive reply.",
+                              icon: "⚡",
+                            },
+                          ] as const).map(({ id, label, desc, icon }) => {
+                            const active = agentSettings().lead_capture_mode === id;
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                onClick={() => updateSettings({ lead_capture_mode: id })}
+                                className={cn(
+                                  "p-4 rounded-xl border text-left transition-all cursor-pointer",
+                                  active
+                                    ? "border-rose-500 bg-rose-50 dark:bg-rose-500/10 shadow-sm shadow-rose-100 dark:shadow-rose-500/10"
+                                    : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-white/[0.02]"
+                                )}
+                              >
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <span className="text-base">{icon}</span>
+                                  <span className={cn("text-xs font-bold", active ? "text-rose-600 dark:text-rose-400" : "text-slate-700 dark:text-slate-300")}>
+                                    {label}
+                                  </span>
+                                  {active && (
+                                    <span className="ml-auto text-[9px] font-bold text-rose-500 uppercase tracking-widest">Active</span>
+                                  )}
+                                </div>
+                                <p className={cn("text-[11px] leading-relaxed", active ? "text-rose-700 dark:text-rose-300/80" : "text-slate-500")}>
+                                  {desc}
+                                </p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20 flex items-start gap-3">
+                        <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-700 dark:text-amber-300/80 leading-relaxed">
+                          <strong>Always ask once, never nag.</strong> Leads are validated against user text — no fabricated emails are ever stored.
+                          View captured leads in the <strong>Leads</strong> section of your dashboard.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tip */}
+                <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/20 flex items-start gap-4">
+                  <Info className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                  <div>
+                    <h5 className="text-sm font-bold text-rose-900 dark:text-white">Tip</h5>
+                    <p className="text-xs text-rose-700 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      The system prompt is the most powerful knob. Use it to control tone, language, and which topics the agent handles.
+                    </p>
+                  </div>
+                </div>
                 </div>
               )}
 
