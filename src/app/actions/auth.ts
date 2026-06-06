@@ -47,7 +47,7 @@ export async function loginAction(prevState: any, formData: FormData) {
          cookieStore.set("accessToken", data.data.accessToken, {
              httpOnly: true,
              secure: process.env.NODE_ENV === "production",
-             sameSite: "lax",
+             sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
              path: "/",
              maxAge: 60 * 60 * 24 * 7 // 7 days expiration (or based on token)
          });
@@ -57,7 +57,7 @@ export async function loginAction(prevState: any, formData: FormData) {
          cookieStore.set("refreshToken", data.data.refreshToken, {
              httpOnly: true,
              secure: process.env.NODE_ENV === "production",
-             sameSite: "lax",
+             sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
              path: "/",
              maxAge: 60 * 60 * 24 * 30 // 30 days expiration
          });
@@ -69,7 +69,7 @@ export async function loginAction(prevState: any, formData: FormData) {
             cookieStore.set("tempToken", data.data.tempToken, {
                httpOnly: true,
                secure: process.env.NODE_ENV === "production",
-               sameSite: "lax",
+               sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                path: "/",
                maxAge: 60 * 15 // 15 mins for 2FA flow
            });
@@ -80,7 +80,7 @@ export async function loginAction(prevState: any, formData: FormData) {
             cookieStore.set("tempToken", data.data.tempToken, {
                httpOnly: true,
                secure: process.env.NODE_ENV === "production",
-               sameSite: "lax",
+               sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
                path: "/",
                maxAge: 60 * 15 // 15 mins for reset flow
            });
@@ -144,7 +144,7 @@ export async function forceResetPasswordAction(prevState: any, formData: FormDat
       cookieStore.set("accessToken", data.data.accessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
           path: "/",
           maxAge: 60 * 60 * 24 * 7
       });
@@ -153,7 +153,7 @@ export async function forceResetPasswordAction(prevState: any, formData: FormDat
           cookieStore.set("refreshToken", data.data.refreshToken, {
               httpOnly: true,
               secure: process.env.NODE_ENV === "production",
-              sameSite: "lax",
+              sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
               path: "/",
               maxAge: 60 * 60 * 24 * 30
           });
