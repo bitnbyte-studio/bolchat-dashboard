@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BookOpen, Bot, LineChart, UserPlus, MessageSquare, Settings, LogOut, MessageCircle, LayoutDashboard, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BolchatLogo } from "./BolchatLogo";
-import { getMeAction } from "@/app/actions/auth";
+import { getMeAction, logoutAction } from "@/app/actions/auth";
 import { useState, useEffect, useCallback, useRef } from "react";
 
 type NavItem = {
@@ -26,6 +26,7 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [expanded, setExpanded] = useState(false);
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -112,15 +113,18 @@ export function Sidebar() {
             Settings
           </span>
         </Link>
-        <Link
-          href="/"
-          className="flex items-center h-10 gap-3 px-3 rounded-lg transition-all text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-l-[3px] border-transparent"
+        <button
+          onClick={async () => {
+            await logoutAction();
+            router.push("/");
+          }}
+          className="w-full flex items-center h-10 gap-3 px-3 rounded-lg transition-all text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-l-[3px] border-transparent"
         >
           <LogOut className="w-5 h-5 shrink-0" />
           <span className={cn("text-sm font-medium transition-opacity duration-300 whitespace-nowrap", expanded ? "opacity-100" : "opacity-0")}>
             Logout
           </span>
-        </Link>
+        </button>
       </div>
     </aside>
   );

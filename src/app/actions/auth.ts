@@ -194,3 +194,26 @@ export async function getMeAction() {
     return { success: false, error: "Network error" };
   }
 }
+
+export async function logoutAction() {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refreshToken")?.value;
+  const baseUrl = process.env.NEXT_BASE_URL || "http://localhost:8000";
+
+  if (refreshToken) {
+    try {
+      await fetch(`${baseUrl}/api/v1/auth/logout?refresh_token=${refreshToken}`, {
+        method: "POST",
+        cache: "no-store",
+      });
+    } catch (e) {
+      console.error("Logout backend error:", e);
+    }
+  }
+
+  cookieStore.delete("accessToken");
+  cookieStore.delete("refreshToken");
+  cookieStore.delete("tempToken");
+
+  return { success: true };
+}
