@@ -60,8 +60,8 @@ export default function NotificationBell({ initialCount, apiUrl }: Props) {
 
   // SSE — real-time push
   useEffect(() => {
-    // withCredentials sends the httpOnly accessToken cookie automatically
-    const es = new EventSource(`${apiUrl}/api/v1/notifications/stream`, {
+    // Use Next.js local proxy to bypass third-party cookie blocking
+    const es = new EventSource(`/api/proxy/v1/notifications/stream`, {
       withCredentials: true,
     });
 
