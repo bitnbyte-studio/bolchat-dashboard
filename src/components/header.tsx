@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Menu, Search, HelpCircle, Activity, Plus, Calendar, Download, RefreshCcw } from "lucide-react";
+import { Menu, Search, HelpCircle, Activity, Download, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,6 +10,7 @@ import { BolchatLogo } from "./BolchatLogo";
 import Link from "next/link";
 import { BookOpen, Bot, LineChart, UserPlus, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import NotificationBell from "@/components/NotificationBell";
 
 const navItems = [
   { title: "Knowledge Base", href: "/dashboard/knowledge", icon: BookOpen },
@@ -18,6 +19,37 @@ const navItems = [
   { title: "Lead Capture", href: "/dashboard/leads", icon: UserPlus },
   { title: "Conversations", href: "/dashboard/conversations", icon: MessageSquare },
 ];
+
+function AnalyticsHeaderControls() {
+  function triggerExport() {
+    window.dispatchEvent(new CustomEvent("analytics:export"));
+  }
+
+  function triggerRefresh() {
+    window.dispatchEvent(new CustomEvent("analytics:refresh"));
+  }
+
+  return (
+    <div className="hidden xl:flex items-center gap-2">
+      {/* Export */}
+      <button
+        onClick={triggerExport}
+        className="h-10 px-5 bg-slate-900 border border-transparent dark:border-white/10 text-white rounded-xl font-bold text-xs flex items-center gap-2 hover:bg-rose-600 transition-all shadow-lg cursor-pointer"
+      >
+        <Download className="w-3 h-3" /> Export
+      </button>
+
+      {/* Refresh */}
+      <button
+        onClick={triggerRefresh}
+        className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer group"
+      >
+        <RefreshCcw className="w-4 h-4 text-slate-500 group-active:rotate-180 transition-transform duration-500" />
+      </button>
+      <div className="h-8 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
+    </div>
+  );
+}
 
 function MobileNav() {
   const pathname = usePathname();
@@ -61,9 +93,10 @@ function getPageMetadata(pathname: string) {
   return { title: "Dashboard", subtitle: "Overview" };
 }
 
-export function Header() {
+export function Header({ initialUnreadCount = 0 }: { initialUnreadCount?: number }) {
   const pathname = usePathname();
   const { title, subtitle } = getPageMetadata(pathname);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-white/80 dark:bg-[#0a0f1e]/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10 px-4 md:px-6 flex items-center justify-between shadow-sm transition-colors duration-300">
@@ -86,35 +119,14 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-3 md:gap-6">
-        {pathname.includes("leads") && (
-          <button className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-bold text-xs md:text-sm shadow-lg shadow-rose-500/20 hover:scale-105 transition-all cursor-pointer">
-            <Plus className="w-4 h-4" /> New Lead
-          </button>
-        )}
-
         {pathname.includes("analytics") && (
-          <div className="hidden xl:flex items-center gap-2">
-            <button className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-white/10 transition-all cursor-pointer">
-              <span>Last 7 Days</span>
-              <Calendar className="w-3 h-3 text-rose-500" />
-            </button>
-            <button className="h-10 px-5 bg-slate-900 border border-transparent dark:border-white/10 text-white rounded-xl font-bold text-xs flex items-center gap-2 hover:bg-rose-600 transition-all shadow-lg cursor-pointer">
-              <Download className="w-3 h-3" /> Export
-            </button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer group">
-              <RefreshCcw className="w-4 h-4 text-slate-500 group-active:rotate-180 transition-transform duration-500" />
-            </button>
-            <div className="h-8 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
-          </div>
+          <AnalyticsHeaderControls />
         )}
 
         <div className="flex items-center gap-2 md:gap-3">
           <ThemeToggle />
 
-          <button className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center relative hover:text-rose-500 text-slate-500 dark:text-slate-400 transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full"></span>
-          </button>
+          <NotificationBell initialCount={initialUnreadCount} apiUrl={apiUrl} />
 
           <div className="h-8 w-[1px] bg-slate-200 dark:bg-white/10 mx-1 hidden sm:block"></div>
 

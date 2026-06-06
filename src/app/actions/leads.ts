@@ -23,6 +23,27 @@ function extractError(detail: unknown, fallback: string): string {
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
 
+export async function createLeadAction(body: {
+  name?: string; email?: string; phone?: string;
+  company?: string; interest?: string; lead_score?: number; status?: string;
+}) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${baseUrl}/api/v1/leads`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(extractError(data.detail, "Failed to create lead"));
+    revalidatePath("/dashboard/leads");
+    return { success: true, data: data.data };
+  } catch (error: any) {
+    console.error("createLeadAction error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function getLeadStatsAction() {
   try {
     const headers = await getAuthHeaders();

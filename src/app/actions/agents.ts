@@ -250,3 +250,20 @@ export async function unlinkKBAction(agentId: string, kbId: string) {
   }
 }
 
+export async function runOptimizerAction(agentId: string) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${baseUrl}/api/v1/agents/${agentId}/optimize`, {
+      method: "POST",
+      headers,
+      cache: "no-store",
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(extractError(data.detail, "Optimizer failed"));
+    return { success: true as const, data: data.data };
+  } catch (error: any) {
+    console.error("runOptimizerAction error:", error);
+    return { success: false as const, error: error.message };
+  }
+}
+

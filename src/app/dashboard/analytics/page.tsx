@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Zap, Users, Clock, CheckCircle, TrendingUp, TrendingDown,
   Cpu, Star, Activity, Loader2, RefreshCw, Minus
@@ -48,24 +49,89 @@ const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const HOUR_LABELS = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:59"];
 
 function TrendChart({ data, color }: { data: TrendPoint[]; color: string }) {
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; d: TrendPoint } | null>(null);
   if (!data.length) return null;
-  const max = Math.max(...data.map((d) => d.messages), 1);
+
+  const PAD_L = 44, PAD_B = 36, PAD_T = 16, PAD_R = 12;
+  const W = 900, H = 340;
+  const innerW = W - PAD_L - PAD_R;
+  const innerH = H - PAD_T - PAD_B;
+
+  const maxVal = Math.max(...data.map((d) => d.messages), 1);
+  const niceMax = Math.ceil(maxVal / 5) * 5 || 5;
+  const yTicks = 5;
+  const barW = Math.min(Math.floor(innerW / data.length) - 2, 24);
+
+  // Thin x-labels to max 10
+  const labelStep = Math.ceil(data.length / 10);
+
+  function barX(i: number) {
+    return PAD_L + (i / data.length) * innerW + (innerW / data.length - barW) / 2;
+  }
+
   return (
-    <div className="flex items-end gap-[2px] h-full w-full">
-      {data.map((d, i) => {
-        const pct = (d.messages / max) * 100;
-        return (
-          <div key={i} className="flex-1 flex flex-col items-center justify-end group relative">
-            <div
-              className="w-full rounded-t transition-all hover:opacity-80 min-h-[2px]"
-              style={{ height: `${Math.max(pct, 2)}%`, background: color }}
+    <div className="relative w-full h-full">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full h-full"
+        onMouseLeave={() => setTooltip(null)}
+      >
+        {/* Y grid lines + ticks */}
+        {Array.from({ length: yTicks + 1 }).map((_, i) => {
+          const val = Math.round((niceMax / yTicks) * i);
+          const y = PAD_T + innerH - (val / niceMax) * innerH;
+          return (
+            <g key={i}>
+              <line x1={PAD_L} x2={W - PAD_R} y1={y} y2={y} stroke="currentColor" strokeOpacity={0.07} strokeWidth={1} className="text-slate-900 dark:text-white" />
+              <text x={PAD_L - 6} y={y + 4} textAnchor="end" fontSize={10} fill="currentColor" className="text-slate-400" fillOpacity={0.5}>{val}</text>
+            </g>
+          );
+        })}
+
+        {/* Bars */}
+        {data.map((d, i) => {
+          const bh = Math.max((d.messages / niceMax) * innerH, d.messages > 0 ? 2 : 0);
+          const x = barX(i);
+          const y = PAD_T + innerH - bh;
+          return (
+            <rect
+              key={i}
+              x={x} y={y} width={barW} height={bh}
+              rx={3}
+              fill={color}
+              fillOpacity={tooltip?.d === d ? 1 : 0.85}
+              className="cursor-pointer transition-opacity"
+              onMouseEnter={(e) => setTooltip({ x: x + barW / 2, y, d })}
             />
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 rounded-lg bg-slate-900 text-white text-[9px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-              {d.date.slice(5)}: {d.messages} msgs, {d.conversations} convs
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+
+        {/* X labels */}
+        {data.map((d, i) => {
+          if (i % labelStep !== 0 && i !== data.length - 1) return null;
+          const x = barX(i) + barW / 2;
+          const [, mo, dy] = d.date.split("-");
+          return (
+            <text key={i} x={x} y={H - 8} textAnchor="middle" fontSize={10} fill="currentColor" fillOpacity={0.45} className="text-slate-500">
+              {`${mo}/${dy}`}
+            </text>
+          );
+        })}
+
+        {/* Tooltip */}
+        {tooltip && (() => {
+          const tx = Math.min(Math.max(tooltip.x, 80), W - 80);
+          const ty = Math.max(tooltip.y - 8, PAD_T);
+          return (
+            <g>
+              <rect x={tx - 64} y={ty - 30} width={128} height={26} rx={6} fill="#0f172a" fillOpacity={0.92} />
+              <text x={tx} y={ty - 13} textAnchor="middle" fontSize={10} fill="white" fontWeight="bold">
+                {tooltip.d.date.slice(5)} · {tooltip.d.messages} msgs · {tooltip.d.conversations} convs
+              </text>
+            </g>
+          );
+        })()}
+      </svg>
     </div>
   );
 }
@@ -118,6 +184,7 @@ const RANGE_OPTIONS = [
 ];
 
 export default function AnalyticsPage() {
+  const searchParams = useSearchParams();
   const [overview, setOverview] = useState<OverviewData | null>(null);
   const [trends, setTrends] = useState<TrendPoint[]>([]);
   const [heatmap, setHeatmap] = useState<HeatmapData | null>(null);
@@ -125,10 +192,16 @@ export default function AnalyticsPage() {
   const [rangeDays, setRangeDays] = useState(30);
   const [trendView, setTrendView] = useState<"day" | "week" | "month">("day");
 
+  // Sync range from URL param (set by header calendar picker)
+  useEffect(() => {
+    const d = Number(searchParams.get("days"));
+    if (d && [7, 30, 90].includes(d)) setRangeDays(d);
+  }, [searchParams]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     const [overviewRes, trendsRes, heatmapRes] = await Promise.all([
-      getOverviewStats(),
+      getOverviewStats(rangeDays),
       getTrends(trendView, rangeDays),
       getHeatmap(rangeDays),
     ]);
@@ -138,9 +211,33 @@ export default function AnalyticsPage() {
     setLoading(false);
   }, [rangeDays, trendView]);
 
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Listen for header Export / Refresh events
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    function handleExport() {
+      if (!trends.length) return;
+      const header = "Date,Messages,Conversations,User Messages,Bot Messages";
+      const rows = trends.map((t) =>
+        `${t.date},${t.messages},${t.conversations},${t.user_messages},${t.bot_messages}`
+      );
+      const csv = [header, ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `analytics-${rangeDays}d.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    function handleRefresh() { fetchData(); }
+    window.addEventListener("analytics:export", handleExport);
+    window.addEventListener("analytics:refresh", handleRefresh);
+    return () => {
+      window.removeEventListener("analytics:export", handleExport);
+      window.removeEventListener("analytics:refresh", handleRefresh);
+    };
+  }, [trends, rangeDays, fetchData]);
 
   const totalUserMessages = trends.reduce((s, t) => s + t.user_messages, 0);
   const msgTrendPct = overview?.messages_trend_pct;
@@ -306,16 +403,16 @@ export default function AnalyticsPage() {
           </div>
 
           {loading ? (
-            <div className="h-72 flex items-center justify-center">
+            <div className="h-96 flex items-center justify-center">
               <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
             </div>
           ) : trends.length === 0 ? (
-            <div className="h-72 w-full flex flex-col items-center justify-center bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+            <div className="h-96 w-full flex flex-col items-center justify-center bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
               <TrendingUp className="w-8 h-8 text-slate-300 mb-2" />
               <p className="text-sm font-medium text-slate-400">No trend data available yet.</p>
             </div>
           ) : (
-            <div className="h-72 w-full">
+            <div className="h-96 w-full">
               <TrendChart data={trends} color="#f43f5e" />
             </div>
           )}

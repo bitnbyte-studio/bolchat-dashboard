@@ -8,14 +8,14 @@ import {
   Rocket, Copy, Key, CheckCircle2, Circle,
   RotateCcw, ArrowRight, MessageCircle, Headphones, HelpCircle, Zap,
   Trash2, AlertTriangle, Brain, MessageSquare, Flame,
-  Square, Flower2, ExternalLink
+  Square, Flower2, ExternalLink, TrendingUp, BookOpen, Settings2, ChevronUp, CheckCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getAgentsAction, createAgentAction, updateAgentAction,
   previewChatAction,
   getWidgetAction, updateWidgetAction, publishAgentAction,
-  deleteAgentAction
+  deleteAgentAction, runOptimizerAction
 } from "@/app/actions/agents";
 import { getKBsAction } from "@/app/actions/knowledge";
 import { getApiKeysAction, createApiKeyAction, revokeApiKeyAction } from "@/app/actions/settings";
@@ -193,6 +193,9 @@ export default function BotManagerPage() {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [revokeKeyTarget, setRevokeKeyTarget] = useState<any>(null);
   const [revokeKeyLoading, setRevokeKeyLoading] = useState(false);
+  const [optimizerLoading, setOptimizerLoading] = useState(false);
+  const [optimizerResult, setOptimizerResult] = useState<any>(null);
+  const [showOptimizerModal, setShowOptimizerModal] = useState(false);
 
   // ── Helpers ──
 
@@ -489,6 +492,37 @@ export default function BotManagerPage() {
 
   // ── Computed ──
 
+  async function handleRunOptimizer() {
+    if (!currentAgent?.id || optimizerLoading) return;
+    setOptimizerLoading(true);
+    const result = await runOptimizerAction(currentAgent.id);
+    setOptimizerLoading(false);
+    if (result.success) {
+      setOptimizerResult(result.data);
+      setShowOptimizerModal(true);
+    } else {
+      toast(result.error || "Optimizer failed", "error");
+    }
+  }
+
+  function applyPromptSuggestion(suggestion: any) {
+    if (!currentAgent) return;
+    const current = currentAgent.system_prompt || "";
+    let updated: string;
+    if (suggestion.current_excerpt && current.includes(suggestion.current_excerpt)) {
+      updated = current.replace(suggestion.current_excerpt, suggestion.suggested_text);
+    } else {
+      updated = current ? `${current}\n\n${suggestion.suggested_text}` : suggestion.suggested_text;
+    }
+    setCurrentAgent({ ...currentAgent, system_prompt: updated });
+    toast("Suggestion applied — switch to Basic Info tab and save.", "success");
+  }
+
+  function applyParamSuggestion(key: string, value: number) {
+    updateSettings({ [key]: value } as any);
+    toast("Setting applied — save the agent to persist.", "success");
+  }
+
   const brandColor = widget?.brand_color || "#f43f5e";
   const isPublished = currentAgent?.status === "published";
   const hasApiKey = apiKeys.length > 0;
@@ -580,8 +614,12 @@ export default function BotManagerPage() {
               <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Auto-Optimize Agent</h4>
               <p className="text-xs text-slate-500 leading-relaxed">Let our AI analyze your recent conversation history to improve accuracy.</p>
             </div>
-            <button className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-rose-500 hover:text-white transition-all cursor-pointer">
-              Run Optimizer
+            <button
+              onClick={handleRunOptimizer}
+              disabled={!currentAgent?.id || optimizerLoading}
+              className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-rose-500 hover:text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {optimizerLoading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Analyzing...</> : "Run Optimizer"}
             </button>
           </div>
         </div>
@@ -1932,6 +1970,139 @@ export default function BotManagerPage() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Auto-Optimize Results Modal ── */}
+      {showOptimizerModal && optimizerResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-20 pb-6">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowOptimizerModal(false)} />
+          <div className="relative w-full max-w-4xl max-h-[72vh] overflow-y-auto bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col">
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-[#0f172a] rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center">
+                  <Sparkles className="w-4.5 h-4.5 text-rose-500" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">Optimization Report</h2>
+                  <p className="text-[11px] text-slate-400">{optimizerResult.conversations_analyzed} conversations analyzed</p>
+                </div>
+              </div>
+              <button onClick={() => setShowOptimizerModal(false)} className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Summary */}
+              {optimizerResult.summary && (
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {optimizerResult.summary}
+                </div>
+              )}
+
+              {/* Knowledge Gaps */}
+              {optimizerResult.knowledge_gaps?.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpen className="w-4 h-4 text-amber-500" />
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Knowledge Gaps</h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">{optimizerResult.knowledge_gaps.length} found</span>
+                  </div>
+                  <div className="space-y-3">
+                    {optimizerResult.knowledge_gaps.map((gap: any, i: number) => (
+                      <div key={i} className="p-4 rounded-xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">{gap.topic}</p>
+                          <span className={cn(
+                            "text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0",
+                            gap.frequency === "high" ? "bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400" :
+                            gap.frequency === "medium" ? "bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400" :
+                            "bg-slate-100 dark:bg-white/5 text-slate-500"
+                          )}>{gap.frequency} frequency</span>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{gap.description}</p>
+                        {gap.suggested_doc && (
+                          <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                            💡 Add to KB: {gap.suggested_doc}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Prompt Suggestions */}
+              {optimizerResult.prompt_suggestions?.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Brain className="w-4 h-4 text-violet-500" />
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Prompt Improvements</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {optimizerResult.prompt_suggestions.map((s: any, i: number) => (
+                      <div key={i} className="p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.03]">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white mb-1">{s.title}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">{s.reason}</p>
+                        <div className="p-3 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-mono text-slate-700 dark:text-slate-300 mb-3 leading-relaxed">
+                          {s.suggested_text}
+                        </div>
+                        <button
+                          onClick={() => applyPromptSuggestion(s)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500 text-white text-xs font-bold hover:bg-rose-600 transition-colors"
+                        >
+                          <CheckCheck className="w-3 h-3" /> Apply to Prompt
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Parameter Suggestions */}
+              {optimizerResult.param_suggestions && Object.keys(optimizerResult.param_suggestions).length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Settings2 className="w-4 h-4 text-blue-500" />
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Parameter Tweaks</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {Object.entries(optimizerResult.param_suggestions).map(([key, val]: [string, any]) => {
+                      const current = (agentSettings() as any)[key];
+                      const changed = val.value !== current;
+                      return (
+                        <div key={key} className="p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.03]">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{key.replace(/_/g, " ")}</p>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs text-slate-400 line-through">{current}</span>
+                            {changed && <><ArrowRight className="w-3 h-3 text-slate-400" /><span className="text-sm font-bold text-blue-600 dark:text-blue-400">{val.value}</span></>}
+                            {!changed && <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{val.value}</span>}
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 leading-snug">{val.reason}</p>
+                          {changed && (
+                            <button
+                              onClick={() => applyParamSuggestion(key, val.value)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500 text-white text-xs font-bold hover:bg-rose-600 transition-colors"
+                            >
+                              <CheckCheck className="w-3 h-3" /> Apply
+                            </button>
+                          )}
+                          {!changed && <span className="text-[10px] text-green-600 dark:text-green-400 font-bold">✓ Already optimal</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!optimizerResult.knowledge_gaps?.length && !optimizerResult.prompt_suggestions?.length && (
+                <div className="text-center py-8 text-slate-400 text-sm">{optimizerResult.summary || "No suggestions at this time."}</div>
+              )}
+            </div>
           </div>
         </div>
       )}

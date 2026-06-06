@@ -16,6 +16,8 @@ type OverviewData = {
   avg_response_time_ms: number | null;
   conversations_trend_pct: number | null;
   messages_trend_pct: number | null;
+  user_satisfaction_pct: number | null;
+  rated_conversations: number;
 };
 
 type TrendPoint = {
@@ -54,26 +56,141 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 function BarChart({ data, color }: { data: TrendPoint[]; color: string }) {
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; d: TrendPoint } | null>(null);
+
   if (!data.length) return null;
+
+  // Layout constants
+  const W = 800;
+  const H = 220;
+  const PAD_LEFT = 48;
+  const PAD_RIGHT = 12;
+  const PAD_TOP = 12;
+  const PAD_BOTTOM = 48;
+  const chartW = W - PAD_LEFT - PAD_RIGHT;
+  const chartH = H - PAD_TOP - PAD_BOTTOM;
+
   const max = Math.max(...data.map((d) => d.messages), 1);
-  const barW = Math.max(100 / data.length - 1, 2);
+
+  // Nice round Y-axis ticks
+  const tickCount = 4;
+  const rawStep = max / tickCount;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const niceStep = Math.ceil(rawStep / magnitude) * magnitude;
+  const yTicks = Array.from({ length: tickCount + 1 }, (_, i) => i * niceStep);
+  const yMax = yTicks[yTicks.length - 1];
+
+  // X-axis label thinning — show at most ~8 labels to avoid overlap
+  const maxLabels = Math.min(8, data.length);
+  const labelStep = Math.ceil(data.length / maxLabels);
+
+  const slotW = chartW / data.length;
+  const barW = Math.max(slotW * 0.55, 2);
+
+  function formatDate(iso: string) {
+    const d = new Date(iso + "T00:00:00Z");
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  }
 
   return (
-    <div className="flex items-end gap-[2px] h-full w-full px-1">
-      {data.map((d, i) => {
-        const pct = (d.messages / max) * 100;
-        return (
-          <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1 group relative">
-            <div
-              className="w-full rounded-t transition-all hover:opacity-80 min-h-[2px]"
-              style={{ height: `${Math.max(pct, 2)}%`, background: color }}
-            />
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 rounded-lg bg-slate-900 text-white text-[9px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-              {d.date.slice(5)}: {d.messages} msgs
-            </div>
-          </div>
-        );
-      })}
+    <div className="relative w-full" style={{ minHeight: "220px" }}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full"
+        style={{ display: "block", height: "220px" }}
+        onMouseLeave={() => setTooltip(null)}
+      >
+        {/* Y-axis grid lines + labels */}
+        {yTicks.map((tick) => {
+          const y = PAD_TOP + chartH - (tick / yMax) * chartH;
+          return (
+            <g key={tick}>
+              <line
+                x1={PAD_LEFT} y1={y}
+                x2={PAD_LEFT + chartW} y2={y}
+                stroke="#e2e8f0" strokeWidth="1"
+              />
+              <text
+                x={PAD_LEFT - 8} y={y + 4}
+                textAnchor="end"
+                fontSize="11"
+                fill="#94a3b8"
+                fontFamily="inherit"
+              >
+                {tick}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Bars */}
+        {data.map((d, i) => {
+          const barH = Math.max((d.messages / yMax) * chartH, 2);
+          const x = PAD_LEFT + i * slotW + (slotW - barW) / 2;
+          const y = PAD_TOP + chartH - barH;
+          const cx = x + barW / 2;
+          return (
+            <g key={i}>
+              <rect
+                x={x} y={y} width={barW} height={barH}
+                fill={color} rx="3" opacity="0.85"
+                style={{ cursor: "pointer", transition: "opacity 0.1s" }}
+                onMouseEnter={(e) => {
+                  const svg = (e.target as SVGElement).closest("svg")!;
+                  const rect = svg.getBoundingClientRect();
+                  const scaleX = rect.width / W;
+                  const scaleY = rect.height / H;
+                  setTooltip({ x: cx * scaleX, y: y * scaleY, d });
+                }}
+                onMouseLeave={() => setTooltip(null)}
+              />
+              {/* X-axis date label */}
+              {i % labelStep === 0 && (
+                <text
+                  x={cx} y={PAD_TOP + chartH + 18}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fill="#94a3b8"
+                  fontFamily="inherit"
+                >
+                  {formatDate(d.date)}
+                </text>
+              )}
+            </g>
+          );
+        })}
+
+        {/* Axis line */}
+        <line
+          x1={PAD_LEFT} y1={PAD_TOP + chartH}
+          x2={PAD_LEFT + chartW} y2={PAD_TOP + chartH}
+          stroke="#e2e8f0" strokeWidth="1.5"
+        />
+
+        {/* Y-axis label */}
+        <text
+          x={12} y={PAD_TOP + chartH / 2}
+          textAnchor="middle"
+          fontSize="10"
+          fill="#94a3b8"
+          fontFamily="inherit"
+          transform={`rotate(-90, 12, ${PAD_TOP + chartH / 2})`}
+        >
+          Messages
+        </text>
+      </svg>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="pointer-events-none absolute z-20 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs shadow-xl whitespace-nowrap -translate-x-1/2 -translate-y-full"
+          style={{ left: tooltip.x, top: tooltip.y - 8 }}
+        >
+          <div className="font-bold">{formatDate(tooltip.d.date)}</div>
+          <div className="text-slate-300 mt-0.5">{tooltip.d.messages} messages</div>
+          <div className="text-slate-400">{tooltip.d.conversations} conversation{tooltip.d.conversations !== 1 ? "s" : ""}</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -93,7 +210,7 @@ export default function DashboardPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     const [overviewRes, trendsRes] = await Promise.all([
-      getOverviewStats(),
+      getOverviewStats(rangeDays),
       getTrends("day", rangeDays),
     ]);
     if (overviewRes.success) setOverview(overviewRes.data);
@@ -141,7 +258,11 @@ export default function DashboardPage() {
     },
     {
       label: "User Satisfaction",
-      value: "--",
+      value: overview?.user_satisfaction_pct != null
+        ? `${overview.user_satisfaction_pct}%`
+        : overview?.rated_conversations === 0
+          ? "No ratings yet"
+          : "--",
       trend: null,
       isPositive: true,
       icon: Users,
@@ -149,6 +270,7 @@ export default function DashboardPage() {
       bg: "bg-green-50 dark:bg-green-500/10",
       sparkData: [],
       sparkColor: "#22c55e",
+      ratedCount: overview?.rated_conversations ?? 0,
     },
   ];
 
@@ -223,8 +345,14 @@ export default function DashboardPage() {
               </div>
             )}
             {stat.sparkData.length <= 1 && stat.label === "User Satisfaction" && (
-              <div className="mt-6 flex items-center justify-center h-8">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Coming Soon</span>
+              <div className="mt-4 flex items-center gap-1.5">
+                {loading ? null : (
+                  <span className="text-[10px] font-medium text-slate-400">
+                    {(stat as any).ratedCount > 0
+                      ? `Based on ${(stat as any).ratedCount} rating${(stat as any).ratedCount !== 1 ? "s" : ""}`
+                      : "Collect ratings via the chat widget"}
+                  </span>
+                )}
               </div>
             )}
           </div>

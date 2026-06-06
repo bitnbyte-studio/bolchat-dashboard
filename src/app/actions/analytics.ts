@@ -21,10 +21,10 @@ function extractError(detail: unknown, fallback: string): string {
   return fallback;
 }
 
-export async function getOverviewStats() {
+export async function getOverviewStats(days = 30) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${baseUrl}/api/v1/analytics/overview`, {
+    const res = await fetch(`${baseUrl}/api/v1/analytics/overview?days=${days}`, {
       headers,
       cache: "no-store",
     });

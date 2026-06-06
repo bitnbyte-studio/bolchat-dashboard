@@ -1,11 +1,14 @@
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
+import { getUnreadCount } from "@/app/actions/notifications"
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const unreadCount = await getUnreadCount();
+
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-[#0a0f1e] font-satoshi text-slate-900 dark:text-slate-100 overflow-hidden transition-colors duration-300">
       {/* Background Subtle Gradient for Dark Mode */}
@@ -16,7 +19,7 @@ export default function DashboardLayout({
       
       <Sidebar />
       <div className="flex-1 lg:ml-16 flex flex-col h-screen overflow-hidden relative z-10 transition-all duration-300 w-full">
-        <Header />
+        <Header initialUnreadCount={unreadCount} />
         <main className="flex-1 overflow-y-auto scroll-smooth animate-fade-in pb-24 scrollbar-hide p-4 md:p-6">
           {children}
         </main>

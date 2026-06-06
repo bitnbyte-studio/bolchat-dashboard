@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronRight, Search, TrendingUp, ChevronDown, ListFilter,
   Download, MapPin, Mail, Eye, UserCheck, CheckCircle, Archive,
@@ -9,7 +10,8 @@ import {
 import { cn } from "@/lib/utils";
 import {
   listLeadsAction, getLeadStatsAction,
-  updateLeadStatusAction, deleteLeadAction, exportLeadsCsvAction
+  updateLeadStatusAction, deleteLeadAction, exportLeadsCsvAction,
+  createLeadAction
 } from "@/app/actions/leads";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -113,6 +115,13 @@ export default function LeadCapturePage() {
   // ── Export ──
   const [exporting, setExporting] = useState(false);
 
+  // ── New Lead Modal ──
+  const [showNewLead, setShowNewLead] = useState(false);
+  const [newLeadSaving, setNewLeadSaving] = useState(false);
+  const [newLeadForm, setNewLeadForm] = useState({
+    name: "", email: "", phone: "", company: "", interest: "", lead_score: 50, status: "new",
+  });
+
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
   const fetchStats = useCallback(async () => {
@@ -201,6 +210,32 @@ export default function LeadCapturePage() {
     setInterestFilter("Any");
     setMinScore(0);
     setPage(1);
+  }
+
+  async function handleCreateLead() {
+    if (!newLeadForm.name && !newLeadForm.email) {
+      toast("Name or email is required", "error");
+      return;
+    }
+    setNewLeadSaving(true);
+    const res = await createLeadAction({
+      ...newLeadForm,
+      name: newLeadForm.name || undefined,
+      email: newLeadForm.email || undefined,
+      phone: newLeadForm.phone || undefined,
+      company: newLeadForm.company || undefined,
+      interest: newLeadForm.interest || undefined,
+    });
+    setNewLeadSaving(false);
+    if (res.success) {
+      toast("Lead created", "success");
+      setShowNewLead(false);
+      setNewLeadForm({ name: "", email: "", phone: "", company: "", interest: "", lead_score: 50, status: "new" });
+      fetchLeads(1);
+      fetchStats();
+    } else {
+      toast(res.error || "Failed to create lead", "error");
+    }
   }
 
   const hasFilters = statusFilter !== "all" || interestFilter !== "Any" || minScore > 0;
@@ -327,6 +362,12 @@ export default function LeadCapturePage() {
             >
               {exporting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
               Export CSV
+            </button>
+            <button
+              onClick={() => setShowNewLead(true)}
+              className="flex items-center gap-1.5 bg-rose-500 hover:bg-rose-600 px-3 py-1.5 rounded-lg text-[10px] font-bold text-white uppercase tracking-widest transition-all cursor-pointer"
+            >
+              <span className="text-sm leading-none">+</span> New Lead
             </button>
           </div>
         </div>
@@ -521,36 +562,38 @@ export default function LeadCapturePage() {
         </div>
       </section>
 
-      {/* Bulk action bar */}
-      <div className={cn(
-        "fixed bottom-10 left-[max(50%,theme(spacing.20))] -translate-x-1/2 z-50 transition-transform duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
-        selectedIds.length > 0 ? "translate-y-0" : "translate-y-[150%]"
-      )}>
-        <div className="bg-white/95 dark:bg-[#0d1425]/95 backdrop-blur-[12px] border border-slate-200 dark:border-rose-500/30 p-3 px-5 rounded-2xl flex items-center gap-6 shadow-2xl dark:shadow-rose-500/10 ring-1 ring-slate-200 dark:ring-white/10">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-rose-500 flex items-center justify-center text-white text-[10px] font-bold shadow-lg shadow-rose-500/30">
-              {selectedIds.length}
+      {/* Bulk action bar — sticky to bottom */}
+      {createPortal(
+        <div className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-4 pt-2 pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
+          selectedIds.length > 0 ? "translate-y-0" : "translate-y-[150%]"
+        )}>
+          <div className="pointer-events-auto bg-white/95 dark:bg-[#0d1425]/95 backdrop-blur-[12px] border border-slate-200 dark:border-rose-500/30 p-3 px-5 rounded-2xl flex items-center gap-6 shadow-2xl dark:shadow-rose-500/10 ring-1 ring-slate-200 dark:ring-white/10">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-rose-500 flex items-center justify-center text-white text-[10px] font-bold shadow-lg shadow-rose-500/30">
+                {selectedIds.length}
+              </div>
+              <span className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">Selected</span>
             </div>
-            <span className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">Selected</span>
+            <button
+              onClick={handleDeleteSelected}
+              className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-rose-500 uppercase tracking-widest transition-colors"
+            >
+              <Trash2 className="w-4 h-4" /> Delete
+            </button>
+            <button
+              onClick={() => setSelectedIds([])}
+              className="text-[10px] font-bold text-slate-400 hover:text-rose-500 uppercase tracking-widest transition-colors"
+            >
+              Cancel
+            </button>
           </div>
-          <button
-            onClick={handleDeleteSelected}
-            className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-rose-500 uppercase tracking-widest transition-colors"
-          >
-            <Trash2 className="w-4 h-4" /> Delete
-          </button>
-          <button
-            onClick={() => setSelectedIds([])}
-            className="text-[10px] font-bold text-slate-400 hover:text-rose-500 uppercase tracking-widest transition-colors"
-          >
-            Cancel
-          </button>
         </div>
-      </div>
+      , document.body)}
 
 
       {/* Lead Details Modal */}
-      {selectedLead && (
+      {selectedLead && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedLead(null)}>
           <div className="w-full max-w-md bg-white dark:bg-[#0d1425] rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-start justify-between bg-slate-50 dark:bg-white/[0.02]">
@@ -656,7 +699,81 @@ export default function LeadCapturePage() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
+
+      {/* New Lead Modal */}
+      {showNewLead && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowNewLead(false)}>
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0d1425] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Add New Lead</h2>
+              <button onClick={() => setShowNewLead(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              {([
+                { key: "name", label: "Name", placeholder: "Full name", type: "text" },
+                { key: "email", label: "Email", placeholder: "email@company.com", type: "email" },
+                { key: "phone", label: "Phone", placeholder: "+1 234 567 8900", type: "text" },
+                { key: "company", label: "Company", placeholder: "Company name", type: "text" },
+              ] as const).map(({ key, label, placeholder, type }) => (
+                <div key={key}>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{label}</label>
+                  <input
+                    type={type}
+                    placeholder={placeholder}
+                    value={newLeadForm[key]}
+                    onChange={e => setNewLeadForm(f => ({ ...f, [key]: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/30 transition"
+                  />
+                </div>
+              ))}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Interest</label>
+                  <select
+                    value={newLeadForm.interest}
+                    onChange={e => setNewLeadForm(f => ({ ...f, interest: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/30 transition"
+                  >
+                    <option value="">None</option>
+                    {INTEREST_OPTIONS.filter(o => o !== "Any").map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Status</label>
+                  <select
+                    value={newLeadForm.status}
+                    onChange={e => setNewLeadForm(f => ({ ...f, status: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/30 transition"
+                  >
+                    {STATUS_OPTIONS.filter(s => s !== "all").map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Lead Score — {newLeadForm.lead_score}</label>
+                <input
+                  type="range" min={0} max={100}
+                  value={newLeadForm.lead_score}
+                  onChange={e => setNewLeadForm(f => ({ ...f, lead_score: Number(e.target.value) }))}
+                  className="w-full accent-rose-500"
+                />
+              </div>
+            </div>
+            <div className="p-5 border-t border-slate-100 dark:border-white/5 flex justify-end gap-3">
+              <button onClick={() => setShowNewLead(false)} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition">Cancel</button>
+              <button
+                onClick={handleCreateLead}
+                disabled={newLeadSaving}
+                className="px-5 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold transition disabled:opacity-50 flex items-center gap-2"
+              >
+                {newLeadSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Create Lead
+              </button>
+            </div>
+          </div>
+        </div>
+      , document.body)}
     </div>
   );
 }
