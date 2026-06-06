@@ -115,6 +115,10 @@ export default function LeadCapturePage() {
   // ── Export ──
   const [exporting, setExporting] = useState(false);
 
+  // ── Mounted ──
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
   // ── New Lead Modal ──
   const [showNewLead, setShowNewLead] = useState(false);
   const [newLeadSaving, setNewLeadSaving] = useState(false);
@@ -563,7 +567,7 @@ export default function LeadCapturePage() {
       </section>
 
       {/* Bulk action bar — sticky to bottom */}
-      {createPortal(
+      {isMounted && createPortal(
         <div className={cn(
           "fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-4 pt-2 pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
           selectedIds.length > 0 ? "translate-y-0" : "translate-y-[150%]"
@@ -593,7 +597,7 @@ export default function LeadCapturePage() {
 
 
       {/* Lead Details Modal */}
-      {selectedLead && createPortal(
+      {isMounted && selectedLead && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedLead(null)}>
           <div className="w-full max-w-md bg-white dark:bg-[#0d1425] rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-start justify-between bg-slate-50 dark:bg-white/[0.02]">
@@ -702,7 +706,7 @@ export default function LeadCapturePage() {
       , document.body)}
 
       {/* New Lead Modal */}
-      {showNewLead && createPortal(
+      {isMounted && showNewLead && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowNewLead(false)}>
           <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0d1425] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10" onClick={e => e.stopPropagation()}>
             <div className="p-5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">

@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-async function authHeaders() {
+async function authHeaders(): Promise<Record<string, string>> {
   const jar = await cookies();
   const token = jar.get("accessToken")?.value;
   return token ? { Authorization: `Bearer ${token}` } : {};

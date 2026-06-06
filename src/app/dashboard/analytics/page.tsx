@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Zap, Users, Clock, CheckCircle, TrendingUp, TrendingDown,
@@ -183,7 +183,7 @@ const RANGE_OPTIONS = [
   { label: "90D", days: 90 },
 ];
 
-export default function AnalyticsPage() {
+function AnalyticsContent() {
   const searchParams = useSearchParams();
   const [overview, setOverview] = useState<OverviewData | null>(null);
   const [trends, setTrends] = useState<TrendPoint[]>([]);
@@ -625,5 +625,13 @@ export default function AnalyticsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function AnalyticsPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-300" /></div>}>
+      <AnalyticsContent />
+    </Suspense>
   );
 }
